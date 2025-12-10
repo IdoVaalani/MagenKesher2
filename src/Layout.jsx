@@ -198,7 +198,7 @@ function LayoutContent({ children, currentPageName }) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-slate-50" dir="rtl">
         <style>{` * { direction: rtl; }`}</style>
-        <Sidebar className="border-l border-slate-200 bg-white transition-all duration-300" collapsible="icon">
+        <Sidebar className="border-r border-slate-200 bg-white transition-all duration-300" collapsible="icon" side="right">
           <SidebarHeader className="border-b border-slate-200 p-4 md:p-6">
             {companies.length > 1 ? (
               <DropdownMenu>
