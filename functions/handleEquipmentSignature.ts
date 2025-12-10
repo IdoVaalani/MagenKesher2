@@ -1,12 +1,8 @@
-
-import { createClient } from 'npm:@base44/sdk@0.1.0';
-
-const base44 = createClient({
-    appId: Deno.env.get('BASE44_APP_ID'), 
-});
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const requestData = await req.json();
         const { token, signatureData, action } = requestData;
 
@@ -14,7 +10,7 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({ error: "חסר טוקן" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
-        const tokens = await base44.entities.SoldierToken.filter({ token, used: false, token_type: "equipment_signature" });
+        const tokens = await base44.asServiceRole.entities.SoldierToken.filter({ token, used: false, token_type: "equipment_signature" });
         if (tokens.length === 0) {
             return new Response(JSON.stringify({ error: "קישור לא תקין, פג תוקפו, או שכבר נעשה בו שימוש." }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
@@ -32,7 +28,7 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({ error: "לא נמצא ציוד לשיוך בקישור זה." }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
-        const equipmentDetailsPromises = equipmentIds.map(id => base44.entities.EquipmentType.get(id).catch(() => null));
+        const equipmentDetailsPromises = equipmentIds.map(id => base44.asServiceRole.entities.EquipmentType.get(id).catch(() => null));
         const equipmentDetails = (await Promise.all(equipmentDetailsPromises)).filter(Boolean);
 
         if (action === 'validate_only') {
@@ -45,12 +41,13 @@ Deno.serve(async (req) => {
             }
 
             const signatureRecord = {
+                company_id: validToken.company_id,
                 soldier_name: validToken.soldier_name,
                 soldier_email: validToken.soldier_email,
                 soldier_id: validToken.soldier_id || "",
                 equipment_items: equipmentDetails.map(eq => ({
                     equipment_name: eq.name,
-                    serial_number: eq.serial_number?.toString() || '', // *** התיקון הקריטי ***
+                    serial_number: eq.serial_number?.toString() || '',
                     equipment_type_id: eq.id
                 })),
                 signature_data: signatureData,
@@ -60,8 +57,8 @@ Deno.serve(async (req) => {
                 status: 'active'
             };
 
-            await base44.entities.EquipmentSignature.create(signatureRecord);
-            await base44.entities.SoldierToken.update(validToken.id, { used: true });
+            await base44.asServiceRole.entities.EquipmentSignature.create(signatureRecord);
+            await base44.asServiceRole.entities.SoldierToken.update(validToken.id, { used: true });
 
             return new Response(JSON.stringify({ success: true, message: "החתימה נשמרה בהצלחה!" }), { status: 200, headers: { "Content-Type": "application/json" } });
         }
