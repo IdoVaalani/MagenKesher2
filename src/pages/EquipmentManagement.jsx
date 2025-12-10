@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { useCompany } from "@/components/CompanyContext";
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
 import { Soldier } from "@/entities/Soldier";
@@ -21,6 +21,7 @@ import AddToSoldierDialog from "../components/equipment/AddToSoldierDialog";
 import SoldierEquipmentDetailsDialog from "../components/equipment/SoldierEquipmentDetailsDialog";
 
 export default function EquipmentManagement() {
+  const { currentCompany } = useCompany();
   const [assignments, setAssignments] = useState([]);
   const [equipmentTypes, setEquipmentTypes] = useState([]);
   const [soldiers, setSoldiers] = useState([]);
@@ -34,8 +35,10 @@ export default function EquipmentManagement() {
   const [selectedSoldierForDetails, setSelectedSoldierForDetails] = useState(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentCompany) {
+      loadData();
+    }
+  }, [currentCompany]);
 
   useEffect(() => {
     if (!showSoldierDetailsDialog) {
@@ -63,9 +66,9 @@ export default function EquipmentManagement() {
       };
 
       const [assignmentsResult, typesResult, soldiersResult] = await Promise.allSettled([
-        loadWithRetry(() => Equipment.list("-created_date"), "Equipment"),
-        loadWithRetry(() => EquipmentType.list(), "EquipmentType"),
-        loadWithRetry(() => Soldier.list(), "Soldier"),
+        loadWithRetry(() => Equipment.filter({ company_id: currentCompany.id }, "-created_date"), "Equipment"),
+        loadWithRetry(() => EquipmentType.filter({ company_id: currentCompany.id }), "EquipmentType"),
+        loadWithRetry(() => Soldier.filter({ company_id: currentCompany.id }), "Soldier"),
       ]);
       
       const loadedAssignments = assignmentsResult.status === 'fulfilled' ? assignmentsResult.value : [];
@@ -203,6 +206,7 @@ export default function EquipmentManagement() {
     expiresAt.setHours(expiresAt.getHours() + 48);
     
     await SoldierToken.create({
+      company_id: currentCompany.id,
       soldier_name: soldierName,
       soldier_email: soldierEmail,
       soldier_id: soldierId || '',
@@ -345,9 +349,9 @@ export default function EquipmentManagement() {
       
     try {
       const [settingsData, users, allSoldiers] = await Promise.all([
-          AppSettings.list(null, 1),
+          AppSettings.filter({ company_id: currentCompany.id }, null, 1),
           User.list(),
-          Soldier.list()
+          Soldier.filter({ company_id: currentCompany.id })
       ]);
       const settings = settingsData?.[0] || {};
       let commMethod = settings.default_communication_method || 'email';
@@ -372,7 +376,7 @@ export default function EquipmentManagement() {
 
       let confirmationWasReset = false;
       const today = new Date().toISOString().split('T')[0];
-      const existingConfirmations = await DailyConfirmationEntity.filter({ soldier_name: soldierName, confirmation_date: today });
+      const existingConfirmations = await DailyConfirmationEntity.filter({ company_id: currentCompany.id, soldier_name: soldierName, confirmation_date: today });
 
       if (existingConfirmations && existingConfirmations.length > 0) {
           await DailyConfirmationEntity.delete(existingConfirmations[0].id);
@@ -426,8 +430,8 @@ export default function EquipmentManagement() {
     try {
         const [allUsers, soldierDataList, settingsData] = await Promise.all([
             User.list(),
-            Soldier.list(),
-            AppSettings.list(null, 1)
+            Soldier.filter({ company_id: currentCompany.id }),
+            AppSettings.filter({ company_id: currentCompany.id }, null, 1)
         ]);
 
         const settings = settingsData?.[0] || {};
