@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSettings } from "@/entities/AppSettings";
 import { DailyConfirmation } from "@/entities/DailyConfirmation";
@@ -6,7 +5,10 @@ import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType"; // Fixed syntax error here
 import { SystemLog } from "@/entities/SystemLog";
 import { Soldier } from "@/entities/Soldier";
+import { EquipmentSignature } from "@/entities/EquipmentSignature";
+import { SoldierToken } from "@/entities/SoldierToken";
 import { DailySummaryLog } from "@/entities/DailySummaryLog";
+import { ReminderLog } from "@/entities/ReminderLog";
 import { UploadFile, SendEmail } from "@/integrations/Core";
 import { sendEmailHandler } from "@/functions/sendEmailHandler";
 import { sendSms } from "@/functions/sendSms";
@@ -504,7 +506,9 @@ ${equipmentReportUrl}` : ''}
         return <div className="text-red-500 p-4 text-center bg-gray-50 min-h-screen">{error}</div>;
     }
 
-    if (!user || user.role !== 'admin') {
+    const isSystemAdmin = user?.role === 'admin';
+
+    if (!user) {
         return (
             <div className="flex justify-center items-center h-screen bg-gray-50">
                 <p className="text-xl text-red-500">
@@ -586,7 +590,7 @@ ${equipmentReportUrl}` : ''}
                                     <SelectContent>
                                         <SelectItem value="email">מייל (מובנית)</SelectItem>
                                         <SelectItem value="gmail">מייל גוגל (פונקציה עצמאית)</SelectItem>
-                                        <SelectItem value="sms">SMS</SelectItem>
+                                        {isSystemAdmin && <SelectItem value="sms">SMS</SelectItem>}
                                     </SelectContent>
                                 </Select>
                                 <p className="text-sm text-slate-500">
@@ -645,7 +649,7 @@ ${equipmentReportUrl}` : ''}
                                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                                         >
                                             <option value="email">מייל</option>
-                                            <option value="sms">SMS</option>
+                                            {isSystemAdmin && <option value="sms">SMS</option>}
                                         </select>
                                     </div>
                                     <div className="col-span-4">
