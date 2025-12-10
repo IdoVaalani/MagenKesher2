@@ -19,6 +19,7 @@ import AssignmentsTable from "../components/equipment/AssignmentsTable";
 import AssignEquipmentDialog from "../components/equipment/AssignEquipmentDialog";
 import AddToSoldierDialog from "../components/equipment/AddToSoldierDialog";
 import SoldierEquipmentDetailsDialog from "../components/equipment/SoldierEquipmentDetailsDialog";
+import TransferEquipmentDialog from "../components/equipment/TransferEquipmentDialog";
 
 export default function EquipmentManagement() {
   const { currentCompany } = useCompany();
@@ -33,6 +34,8 @@ export default function EquipmentManagement() {
   const [selectedSoldierForAdd, setSelectedSoldierForAdd] = useState(null);
   const [showSoldierDetailsDialog, setShowSoldierDetailsDialog] = useState(false);
   const [selectedSoldierForDetails, setSelectedSoldierForDetails] = useState(null);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [selectedEquipmentForTransfer, setSelectedEquipmentForTransfer] = useState(null);
 
   useEffect(() => {
     if (currentCompany) {
@@ -198,6 +201,17 @@ export default function EquipmentManagement() {
     const soldier = soldiers.find(s => s.full_name === soldierName) || { full_name: soldierName };
     setSelectedSoldierForDetails(soldier);
     setShowSoldierDetailsDialog(true);
+  };
+
+  const handleTransferEquipment = (equipment) => {
+    setSelectedEquipmentForTransfer(equipment);
+    setShowTransferDialog(true);
+  };
+
+  const handleTransferComplete = () => {
+    setShowTransferDialog(false);
+    setSelectedEquipmentForTransfer(null);
+    loadData();
   };
 
   const generateSoldierToken = async (soldierName, soldierEmail, type = "daily_confirmation", metadata = null, soldierId = null) => {
@@ -674,6 +688,7 @@ export default function EquipmentManagement() {
                 onSendConfirmationRequest={handleSendSingleConfirmation}
                 onShowSoldierDetails={handleShowSoldierDetails}
                 onRefreshData={loadData}
+                onTransferEquipment={handleTransferEquipment}
                 locationUpdates={locationUpdates}
                 onLocationChange={handleLocationChange}
                 setLocationUpdates={setLocationUpdates}
@@ -713,6 +728,15 @@ export default function EquipmentManagement() {
           allEquipmentTypes={equipmentTypes}
           allAssignments={assignments}
           onRefreshData={loadData}
+        />
+      )}
+
+      {selectedEquipmentForTransfer && (
+        <TransferEquipmentDialog
+          open={showTransferDialog}
+          onOpenChange={setShowTransferDialog}
+          equipment={selectedEquipmentForTransfer}
+          onTransferComplete={handleTransferComplete}
         />
       )}
     </div>
