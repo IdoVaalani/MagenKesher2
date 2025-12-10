@@ -26,7 +26,6 @@ export default function CompanyRegistration() {
     try {
       const user = await base44.auth.me();
       
-      // יצירת הפלוגה
       const company = await base44.entities.Company.create({
         name: formData.name,
         description: formData.description,
@@ -34,7 +33,6 @@ export default function CompanyRegistration() {
         is_active: true
       });
 
-      // יצירת הגדרות ברירת מחדל לפלוגה
       await base44.entities.AppSettings.create({
         company_id: company.id,
         manager_email: formData.admin_email || user.email,
@@ -44,10 +42,9 @@ export default function CompanyRegistration() {
 
       setSuccess(true);
       
-      // העברה לדף הבית אחרי 2 שניות
       setTimeout(() => {
-        window.location.href = createPageUrl("Dashboard");
-      }, 2000);
+        window.location.reload();
+      }, 1500);
 
     } catch (err) {
       console.error("Error creating company:", err);

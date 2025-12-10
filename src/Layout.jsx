@@ -70,10 +70,11 @@ function LayoutContent({ children, currentPageName }) {
 
   // בדיקה אם יש פלוגה - אם לא, הפנה להרשמה
   useEffect(() => {
-    if (!hasToken && user && !companiesLoading && companies.length === 0) {
-      navigate(createPageUrl("CompanyRegistration"), { replace: true });
+    const companyRegUrl = createPageUrl("CompanyRegistration");
+    if (!hasToken && user && !companiesLoading && companies.length === 0 && location.pathname !== companyRegUrl) {
+      navigate(companyRegUrl, { replace: true });
     }
-  }, [user, companiesLoading, companies, hasToken, navigate]);
+  }, [user, companiesLoading, companies, hasToken, navigate, location.pathname]);
 
   useEffect(() => {
     if (!hasToken && user && currentCompany) {
@@ -154,7 +155,7 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  if (isLoading || !user || companiesLoading) {
+  if (isLoading || companiesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center p-6">
@@ -165,7 +166,20 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  if (!currentCompany && companies.length === 0) {
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center p-6">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 text-lg">מתחבר...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // אפשר גישה לדף הרשמת פלוגה גם ללא פלוגה
+  const companyRegUrl = createPageUrl("CompanyRegistration");
+  if (!currentCompany && companies.length === 0 && location.pathname !== companyRegUrl) {
     return null;
   }
 

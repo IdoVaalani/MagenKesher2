@@ -14,12 +14,10 @@ export function CompanyProvider({ children }) {
 
   const loadCompanies = async () => {
     try {
-      const user = await base44.auth.me();
       const allCompanies = await base44.entities.Company.list();
       
       setCompanies(allCompanies);
       
-      // טען פלוגה שמורה מ-localStorage או קח את הראשונה
       const savedCompanyId = localStorage.getItem('selected_company_id');
       if (savedCompanyId && allCompanies.find(c => c.id === savedCompanyId)) {
         setCurrentCompany(allCompanies.find(c => c.id === savedCompanyId));
@@ -29,6 +27,7 @@ export function CompanyProvider({ children }) {
       }
     } catch (error) {
       console.error('Error loading companies:', error);
+      setCompanies([]);
     }
     setLoading(false);
   };
