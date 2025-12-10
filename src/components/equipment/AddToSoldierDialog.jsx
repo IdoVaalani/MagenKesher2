@@ -1,20 +1,20 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
+import { useCompany } from "@/components/CompanyContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Equipment } from "@/entities/Equipment";
-import { SendEmail } from "@/integrations/Core"; // Keep this import for fallback
+import { SendEmail } from "@/integrations/Core";
 import { SoldierToken } from "@/entities/SoldierToken";
-import { X, Plus, MapPin } from "lucide-react";
+import { Save, X, Plus, MapPin } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Mail, PenTool } from "lucide-react";
 import DigitalSignatureDialog from "./DigitalSignatureDialog";
-import { EquipmentSignature } from "@/entities/EquipmentSignature"; // Import EquipmentSignature
-import { AppSettings } from "@/entities/AppSettings"; // New import
-import { sendEmailHandler } from "@/functions/sendEmailHandler"; // New import
+import { EquipmentSignature } from "@/entities/EquipmentSignature";
+import { AppSettings } from "@/entities/AppSettings";
+import { sendEmailHandler } from "@/functions/sendEmailHandler";
 
 export default function AddToSoldierDialog({ 
   open, 
@@ -26,6 +26,7 @@ export default function AddToSoldierDialog({
   assignments, 
   onAssignSuccess 
 }) {
+  const { currentCompany } = useCompany();
   const [selectedEquipmentTypeId, setSelectedEquipmentTypeId] = useState("");
   const [location, setLocation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -69,11 +70,12 @@ export default function AddToSoldierDialog({
     expiresAt.setHours(expiresAt.getHours() + 48); // 48 hours validity
     
     await SoldierToken.create({
+      company_id: currentCompany.id,
       soldier_name: soldierName,
       soldier_email: soldierEmail,
       soldier_id: soldierId || '',
       token: token,
-      token_type: "equipment_signature", // Corrected token type
+      token_type: "equipment_signature",
       expires_at: expiresAt.toISOString(),
       used: false,
       metadata: JSON.stringify({ equipment_ids: [equipmentType.id] })
@@ -154,7 +156,8 @@ ${signatureUrl}
 
     setIsSaving(true);
     try {
-      const newEquipmentAssignment = await Equipment.create({ // Save the created assignment
+      const newEquipmentAssignment = await Equipment.create({
+        company_id: currentCompany.id,
         soldier_name: soldierName,
         soldier_id: soldierId || "",
         soldier_email: soldierEmail || "",
@@ -193,8 +196,8 @@ ${signatureUrl}
     setIsSaving(true); // Indicate saving process
     try {
       const { soldier, equipmentType, assignmentId } = createdEquipment;
-      // Create signature record
       await EquipmentSignature.create({
+          company_id: currentCompany.id,
           soldier_name: soldier.full_name,
           soldier_id: soldier.personal_id || "",
           soldier_email: soldier.email || "",
@@ -202,7 +205,7 @@ ${signatureUrl}
               equipment_name: equipmentType.name,
               serial_number: equipmentType.serial_number?.toString() || '',
               equipment_type_id: equipmentType.id,
-              assignment_id: assignmentId // Link to the specific assignment
+              assignment_id: assignmentId
           }],
           signature_data: signatureData,
           signature_date: new Date().toISOString().split('T')[0],
