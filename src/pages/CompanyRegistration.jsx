@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useCompany } from "@/components/CompanyContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +11,8 @@ import { Building2, CheckCircle, Loader2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 export default function CompanyRegistration() {
+  const navigate = useNavigate();
+  const { loadCompanies } = useCompany();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -40,11 +44,16 @@ export default function CompanyRegistration() {
         app_url: window.location.origin
       });
 
+      // שמירה ב-localStorage
+      localStorage.setItem('selected_company_id', company.id);
+
       setSuccess(true);
       
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // טעינה מחדש של הפלוגות והעברה לדף הבית
+      setTimeout(async () => {
+        await loadCompanies();
+        navigate(createPageUrl("Dashboard"), { replace: true });
+      }, 1000);
 
     } catch (err) {
       console.error("Error creating company:", err);
