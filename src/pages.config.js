@@ -9,6 +9,7 @@ import DataCleanup from './pages/DataCleanup';
 import SignEquipment from './pages/SignEquipment';
 import SystemLog from './pages/SystemLog';
 import SystemLogAnalysis from './pages/SystemLogAnalysis';
+import CompanyRegistration from './pages/CompanyRegistration';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "SignEquipment": SignEquipment,
     "SystemLog": SystemLog,
     "SystemLogAnalysis": SystemLogAnalysis,
+    "CompanyRegistration": CompanyRegistration,
 }
 
 export const pagesConfig = {
