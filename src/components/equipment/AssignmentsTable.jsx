@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Package, Plus, Mail, Eye, MapPin, Save, User } from "lucide-react";
+import { Trash2, Package, Plus, Mail, Eye, MapPin, Save, User, ArrowRightLeft } from "lucide-react";
 import { Equipment } from "@/entities/Equipment";
 
 // רכיב קלט שמנהל את המצב שלו באופן פנימי
@@ -76,7 +76,8 @@ export default function AssignmentsTable({
   onAddEquipmentToSoldier, 
   onSendConfirmationRequest,
   onShowSoldierDetails,
-  onRefreshData
+  onRefreshData,
+  onTransferEquipment
 }) {
   const [localLocationEdits, setLocalLocationEdits] = useState({});
   const [savingLocations, setSavingLocations] = useState({});
@@ -251,6 +252,24 @@ export default function AssignmentsTable({
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-purple-600 hover:bg-purple-50"
+                  onClick={() => {
+                    const firstItem = data.items[0];
+                    const type = typesMap.get(firstItem.equipment_type_id);
+                    onTransferEquipment({
+                      ...firstItem,
+                      equipmentTypeName: type?.name || 'לא ידוע'
+                    });
+                  }}
+                >
+                  <ArrowRightLeft className="w-4 h-4 mr-1" />
+                  העבר ציוד
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="text-red-600 hover:bg-red-50"
                   onClick={() => onDeleteSoldierAssignments(soldierName)}
                 >
@@ -357,6 +376,22 @@ export default function AssignmentsTable({
                     title="שלח בקשה לאישור מחודש"
                   >
                     <Mail className="w-4 h-4 text-blue-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-purple-100"
+                    onClick={() => {
+                      const firstItem = data.items[0];
+                      const type = typesMap.get(firstItem.equipment_type_id);
+                      onTransferEquipment({
+                        ...firstItem,
+                        equipmentTypeName: type?.name || 'לא ידוע'
+                      });
+                    }}
+                    title="העבר ציוד לחייל אחר"
+                  >
+                    <ArrowRightLeft className="w-4 h-4 text-purple-600" />
                   </Button>
                   <Button
                     variant="ghost"
