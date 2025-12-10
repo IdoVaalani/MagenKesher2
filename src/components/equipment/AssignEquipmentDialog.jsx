@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
+import { useCompany } from "@/components/CompanyContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +17,7 @@ import { AppSettings } from "@/entities/AppSettings";
 import { sendEmailHandler } from "@/functions/sendEmailHandler";
 
 export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, equipmentTypes, assignments, onAssignSuccess }) {
+  const { currentCompany } = useCompany();
   const [selectedSoldierId, setSelectedSoldierId] = useState("");
   const [selectedEquipmentTypeIds, setSelectedEquipmentTypeIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,6 +75,7 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
     expiresAt.setHours(expiresAt.getHours() + 48);
     
     await SoldierToken.create({
+      company_id: currentCompany.id,
       soldier_name: soldierName,
       soldier_email: soldierEmail,
       soldier_id: soldierId || '',
@@ -156,6 +158,7 @@ ${signatureUrl}
     try {
       const creationPromises = selectedEquipmentTypeIds.map(typeId => {
         return Equipment.create({
+          company_id: currentCompany.id,
           soldier_name: soldier.full_name,
           soldier_id: soldier.personal_id || "",
           soldier_email: soldier.email || "",
@@ -200,6 +203,7 @@ ${signatureUrl}
     try {
       const { soldier, equipmentTypes } = createdEquipmentInfo;
       await EquipmentSignature.create({
+          company_id: currentCompany.id,
           soldier_name: soldier.full_name,
           soldier_id: soldier.personal_id || "",
           soldier_email: soldier.email || "",
