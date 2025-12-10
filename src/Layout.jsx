@@ -183,6 +183,16 @@ function LayoutContent({ children, currentPageName }) {
     return null;
   }
 
+  // דף הרשמת פלוגה ללא Sidebar
+  if (location.pathname === companyRegUrl || currentPageName === "CompanyRegistration") {
+    return (
+      <div className="min-h-screen bg-slate-50" dir="rtl">
+        <style>{` * { direction: rtl; }`}</style>
+        {children}
+      </div>
+    );
+  }
+
   // הצגת ה-Layout המלא למשתמשים מחוברים
   return (
     <SidebarProvider>
