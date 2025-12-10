@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { useCompany } from "@/components/CompanyContext";
 import { Soldier } from "@/entities/Soldier";
 import { Equipment } from "@/entities/Equipment";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ const retryOperation = async (operation, maxRetries = 3, delay = 1000) => {
 };
 
 export default function SoldiersPage() {
+  const { currentCompany } = useCompany();
   const [soldiers, setSoldiers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -34,18 +35,21 @@ export default function SoldiersPage() {
   const [soldierToDelete, setSoldierToDelete] = useState(null);
 
   useEffect(() => {
-    loadSoldiers();
-  }, []);
+    if (currentCompany) {
+      loadSoldiers();
+    }
+  }, [currentCompany]);
 
   const loadSoldiers = async () => {
+    if (!currentCompany) return;
+    
     setLoading(true);
     try {
-      const data = await retryOperation(() => Soldier.list("-created_date"));
-      // הוספת הגנה מפני נתונים לא תקינים
+      const data = await retryOperation(() => Soldier.filter({ company_id: currentCompany.id }, "-created_date"));
       setSoldiers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading soldiers after retries:", error);
-      setSoldiers([]); // ברירת מחדל בטוחה
+      setSoldiers([]);
       alert("שגיאה בטעינת רשימת החיילים. אנא נסה לרענן את הדף.");
     }
     setLoading(false);
@@ -88,11 +92,11 @@ export default function SoldiersPage() {
         const assignmentsToDelete = [];
         
         if (soldierToDelete.personal_id) {
-          const byId = await retryOperation(() => Equipment.filter({ soldier_id: soldierToDelete.personal_id }));
+          const byId = await retryOperation(() => Equipment.filter({ company_id: currentCompany.id, soldier_id: soldierToDelete.personal_id }));
           if (byId && Array.isArray(byId)) assignmentsToDelete.push(...byId);
         }
         
-        const byName = await retryOperation(() => Equipment.filter({ soldier_name: soldierToDelete.full_name }));
+        const byName = await retryOperation(() => Equipment.filter({ company_id: currentCompany.id, soldier_name: soldierToDelete.full_name }));
         if (byName && Array.isArray(byName)) assignmentsToDelete.push(...byName);
 
         const uniqueAssignments = Array.from(new Map(assignmentsToDelete.map(item => [item.id, item])).values());
