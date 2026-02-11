@@ -99,19 +99,35 @@ export default function EquipmentManagement() {
     }));
   };
 
+  const [showStorageFilter, setShowStorageFilter] = useState(false);
+
   const filteredAssignments = React.useMemo(() => {
-    if (!searchTerm.trim()) return assignments;
-    const searchLower = searchTerm.toLowerCase().trim();
-    return assignments.filter(assignment => {
-      if (assignment.soldier_name?.toLowerCase().includes(searchLower)) return true;
-      const equipmentType = equipmentTypes.find(type => type.id === assignment.equipment_type_id);
-      if (equipmentType) {
-        if (equipmentType.serial_number?.toString().toLowerCase().includes(searchLower)) return true;
-        if (equipmentType.name?.toLowerCase().includes(searchLower)) return true;
-      }
-      return false;
-    });
-  }, [assignments, equipmentTypes, searchTerm]);
+    let filtered = assignments;
+    
+    // סינון לפי משקשייה
+    if (showStorageFilter) {
+      filtered = filtered.filter(a => 
+        a.soldier_name === '🏢 משקשייה (חדר נשק)' || 
+        a.soldier_name?.includes('משקשייה')
+      );
+    }
+    
+    // סינון לפי חיפוש
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(assignment => {
+        if (assignment.soldier_name?.toLowerCase().includes(searchLower)) return true;
+        const equipmentType = equipmentTypes.find(type => type.id === assignment.equipment_type_id);
+        if (equipmentType) {
+          if (equipmentType.serial_number?.toString().toLowerCase().includes(searchLower)) return true;
+          if (equipmentType.name?.toLowerCase().includes(searchLower)) return true;
+        }
+        return false;
+      });
+    }
+    
+    return filtered;
+  }, [assignments, equipmentTypes, searchTerm, showStorageFilter]);
 
   const updateSoldierDetailsInAssignments = async () => {
     if (!window.confirm("האם אתה בטוח? פעולה זו תתקן שמות חיילים שהתקלקלו.")) return;
@@ -644,20 +660,30 @@ export default function EquipmentManagement() {
             <CardTitle className="text-xl font-bold text-slate-800">
               סיכום שיוכים
             </CardTitle>
-            <div className="mt-4">
-              <div className="relative max-w-md">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <Input
-                  type="text"
-                  placeholder="חפש לפי שם חייל, מספר צ' או שם ציוד..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                />
+            <div className="mt-4 space-y-3">
+              <div className="flex gap-3 items-center">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="חפש לפי שם חייל, מספר צ' או שם ציוד..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pr-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <Button
+                  variant={showStorageFilter ? "default" : "outline"}
+                  onClick={() => setShowStorageFilter(!showStorageFilter)}
+                  className={showStorageFilter ? "bg-blue-600" : ""}
+                >
+                  🏢 משקשייה בלבד
+                </Button>
               </div>
-              {searchTerm && (
-                <p className="text-sm text-slate-600 mt-2">
+              {(searchTerm || showStorageFilter) && (
+                <p className="text-sm text-slate-600">
                   מציג {filteredAssignments.length} תוצאות מתוך {assignments.length} שיוכים
+                  {showStorageFilter && " (משקשייה)"}
                 </p>
               )}
             </div>
