@@ -98,8 +98,8 @@ export default function AssignmentsTable({
     return assignments.reduce((acc, assignment) => {
       if (!assignment) return acc;
       
-      // ציוד ללא חייל שייך למשקשייה
-      const soldierKey = assignment.soldier_name && assignment.soldier_name.trim() 
+      // ציוד ללא חייל או עם שם ריק שייך למשקשייה
+      const soldierKey = (assignment.soldier_name && assignment.soldier_name.trim() !== '') 
         ? assignment.soldier_name 
         : '🏢 משקשייה (חדר נשק)';
       
