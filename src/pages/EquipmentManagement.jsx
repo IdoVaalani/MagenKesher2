@@ -472,9 +472,10 @@ export default function EquipmentManagement() {
         const registeredEmails = new Set(allUsers.map(u => u.email?.toLowerCase()).filter(Boolean));
         
         const soldierGroups = assignments.reduce((acc, assignment) => {
-            if (assignment?.soldier_name) {
-                (acc[assignment.soldier_name] = acc[assignment.soldier_name] || []).push(assignment);
-            }
+            const soldierKey = assignment?.soldier_name && assignment.soldier_name.trim() 
+                ? assignment.soldier_name 
+                : '🏢 משקשייה (חדר נשק)';
+            (acc[soldierKey] = acc[soldierKey] || []).push(assignment);
             return acc;
         }, {});
         
