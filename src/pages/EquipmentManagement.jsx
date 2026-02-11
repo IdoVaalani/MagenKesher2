@@ -108,7 +108,9 @@ export default function EquipmentManagement() {
     if (showStorageFilter) {
       filtered = filtered.filter(a => 
         a.soldier_name === '🏢 משקשייה (חדר נשק)' || 
-        a.soldier_name?.includes('משקשייה')
+        a.soldier_name?.includes('משקשייה') ||
+        !a.soldier_name || 
+        a.soldier_name.trim() === ''
       );
     }
     
