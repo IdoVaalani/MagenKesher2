@@ -44,6 +44,16 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
   const safeSoldiers = Array.isArray(soldiers) ? soldiers : [];
   const safeEquipmentTypes = Array.isArray(equipmentTypes) ? equipmentTypes : [];
   const safeAssignments = Array.isArray(assignments) ? assignments : [];
+  
+  // הוספת אפשרות משקשייה
+  const storageOption = { 
+    id: 'STORAGE', 
+    full_name: '🏢 משקשייה (חדר נשק)', 
+    personal_id: '', 
+    email: '' 
+  };
+  
+  const allSoldierOptions = [storageOption, ...safeSoldiers];
 
   const availableEquipmentTypes = useMemo(() => {
     const assignedUniqueTypeIds = new Set(
@@ -148,11 +158,13 @@ ${signatureUrl}
       return;
     }
 
-    const soldier = safeSoldiers.find(s => s.id === selectedSoldierId);
+    const soldier = allSoldierOptions.find(s => s.id === selectedSoldierId);
     if (!soldier) {
-      alert("שגיאה בנתוני החייל");
+      alert("שגיאה בבחירה");
       return;
     }
+    
+    const isStorage = soldier.id === 'STORAGE';
 
     setIsSaving(true);
     try {
@@ -172,7 +184,11 @@ ${signatureUrl}
       
       const equipmentToSign = selectedEquipmentTypes;
 
-      if (equipmentToSign.length > 0) {
+      // משקשייה לא דורשת חתימה
+      if (isStorage) {
+        alert(`הציוד הועבר למשקשייה בהצלחה.`);
+        onAssignSuccess();
+      } else if (equipmentToSign.length > 0) {
         if (signatureMethod === "email") {
           if (soldier.email) {
             await sendSignatureRequest(soldier, equipmentToSign);
@@ -250,9 +266,9 @@ ${signatureUrl}
                   <SelectValue placeholder="בחר חייל מהרשימה..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {safeSoldiers.map(s => (
+                  {allSoldierOptions.map(s => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.full_name} {s.email ? `(${s.email})` : '(אין מייל)'}
+                      {s.full_name} {s.id !== 'STORAGE' && s.email ? `(${s.email})` : s.id !== 'STORAGE' ? '(אין מייל)' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -49,7 +49,16 @@ export default function TransferEquipmentDialog({ open, onOpenChange, equipment,
     setLoading(false);
   };
 
-  const filteredSoldiers = soldiers.filter(soldier =>
+  const storageOption = { 
+    id: 'STORAGE', 
+    full_name: '🏢 משקשייה (חדר נשק)', 
+    personal_id: '', 
+    email: '' 
+  };
+  
+  const allSoldierOptions = [storageOption, ...soldiers];
+  
+  const filteredSoldiers = allSoldierOptions.filter(soldier =>
     soldier.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     soldier.personal_id?.includes(searchTerm)
   );
