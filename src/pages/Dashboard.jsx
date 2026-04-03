@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User } from "@/entities/User";
 import { Equipment } from "@/entities/Equipment";
@@ -866,19 +865,19 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">לוח בקרה</h1>
-            <p className="text-slate-600">
-              סקירה כללית של מצב האישורים היומיים • עדכון אחרון: {stats.lastUpdate}
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-1">לוח בקרה</h1>
+            <p className="text-slate-600 text-sm md:text-base">
+              סקירה כללית • עדכון אחרון: {stats.lastUpdate}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <Button 
               variant="outline" 
               onClick={handleRefresh} 
               disabled={isRefreshing || isSending}
-              className="bg-white hover:bg-slate-50"
+              className="bg-white hover:bg-slate-50 flex-1 md:flex-none"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'מרענן...' : 'רענן'}
@@ -887,7 +886,7 @@ export default function Dashboard() {
                 variant="outline"
                 onClick={() => setShowManualConfirmationDialog(true)}
                 disabled={isSending}
-                className="bg-white hover:bg-slate-50"
+                className="bg-white hover:bg-slate-50 flex-1 md:flex-none"
             >
                 <UserCheck className="w-4 h-4 mr-2" />
                 אישור ידני
@@ -895,7 +894,7 @@ export default function Dashboard() {
             <Button
               onClick={sendConfirmationRequestToAll}
               disabled={isSending || stats.totalSoldiers === 0}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 w-full md:w-auto"
             >
               <Mail className="w-4 h-4 mr-2" />
               {isSending ? 'שולח...' : (stats.confirmed === 0 ? 'שלח בקשת אישור לכולם' : 'שלח תזכורת לממתינים')}

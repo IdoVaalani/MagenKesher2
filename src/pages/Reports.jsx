@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { DailyConfirmation } from "@/entities/DailyConfirmation";
 import { EquipmentSignature } from "@/entities/EquipmentSignature";
@@ -509,7 +508,7 @@ export default function Reports() {
         </div>
 
         <Tabs defaultValue="confirmations" className="w-full">
-          <TabsList className="h-auto flex-wrap">
+          <TabsList className="h-auto flex-wrap gap-1 mb-2">
             <TabsTrigger value="confirmations" className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               דוחות אישורים
@@ -561,28 +560,28 @@ export default function Reports() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="start-date">מתאריך:</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Label htmlFor="start-date" className="whitespace-nowrap">מתאריך:</Label>
                     <Input
                       id="start-date"
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-48"
+                      className="flex-1 sm:w-48"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="end-date">עד תאריך:</Label>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Label htmlFor="end-date" className="whitespace-nowrap">עד תאריך:</Label>
                     <Input
                       id="end-date"
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-48"
+                      className="flex-1 sm:w-48"
                     />
                   </div>
-                  <Button onClick={loadReportData} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={loadReportData} disabled={loading} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                     {loading ? "טוען..." : "הפק דוח"}
                   </Button>
                 </div>
@@ -848,7 +847,46 @@ export default function Reports() {
                     )}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div>
+                  {/* Mobile: card view */}
+                  <div className="block md:hidden divide-y divide-slate-100">
+                    {flattenedSignatures.map((item, index) => (
+                      <div
+                        key={`mobile-sig-${item.signatureId}-${index}`}
+                        className={`p-4 space-y-2 ${item.status === 'revoked' ? 'bg-red-50' : ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-slate-800">{item.soldier_name || '-'}</p>
+                            {item.soldier_id && <p className="text-xs text-slate-500">מס' אישי: {item.soldier_id}</p>}
+                            <p className="text-sm text-slate-700 mt-1">{item.equipment_name || '-'}</p>
+                            {item.serial_number && <p className="text-xs text-slate-500">צ': {item.serial_number}</p>}
+                            <p className="text-xs text-slate-400 mt-1">
+                              {item.signature_date}{item.signature_time ? ` ${item.signature_time}` : ''}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <Badge className={item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                              {item.status === 'active' ? 'פעיל' : 'בוטל'}
+                            </Badge>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => setSelectedSignature(item)} className="h-8 w-8">
+                                <Eye className="w-4 h-4 text-blue-600" />
+                              </Button>
+                              {item.status === 'active' && (
+                                <Button variant="ghost" size="icon" onClick={() => handleRevokeSignature(item.signatureId)} className="h-8 w-8">
+                                  <Trash2 className="w-4 h-4 text-red-600" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop: table view */}
+                  <div className="hidden md:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -865,7 +903,7 @@ export default function Reports() {
                         {flattenedSignatures.map((item, index) => (
                           <TableRow 
                             key={`${item.signatureId}-${item.equipment_type_id || item.equipment_name}-${index}`} 
-                            className={item.status === 'revoked' ? 'bg-red-50/50 hover:bg-red-100/50' : 'hover:bg-slate-50'} // Added class for revoked signatures
+                            className={item.status === 'revoked' ? 'bg-red-50/50 hover:bg-red-100/50' : 'hover:bg-slate-50'}
                           >
                             <TableCell>{item.soldier_name || '-'}</TableCell>
                             <TableCell>{item.soldier_id || '-'}</TableCell>
@@ -882,21 +920,11 @@ export default function Reports() {
                               </Badge>
                             </TableCell>
                             <TableCell className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSelectedSignature(item)}
-                                title="הצג חתימה"
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => setSelectedSignature(item)} title="הצג חתימה">
                                 <Eye className="w-4 h-4 text-blue-600" />
                               </Button>
                               {item.status === 'active' && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleRevokeSignature(item.signatureId)}
-                                  title="בטל חתימה"
-                                >
+                                <Button variant="ghost" size="icon" onClick={() => handleRevokeSignature(item.signatureId)} title="בטל חתימה">
                                   <Trash2 className="w-4 h-4 text-red-600" />
                                 </Button>
                               )}
@@ -905,6 +933,7 @@ export default function Reports() {
                         ))}
                       </TableBody>
                     </Table>
+                  </div>
                   </div>
                 )}
               </CardContent>
@@ -972,28 +1001,28 @@ export default function Reports() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="equipment-start-date">מתאריך:</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Label htmlFor="equipment-start-date" className="whitespace-nowrap">מתאריך:</Label>
                     <Input
                       id="equipment-start-date"
                       type="date"
                       value={equipmentStartDate}
                       onChange={(e) => setEquipmentStartDate(e.target.value)}
-                      className="w-48"
+                      className="flex-1 sm:w-48"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="equipment-end-date">עד תאריך:</Label>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Label htmlFor="equipment-end-date" className="whitespace-nowrap">עד תאריך:</Label>
                     <Input
                       id="equipment-end-date"
                       type="date"
                       value={equipmentEndDate}
                       onChange={(e) => setEquipmentEndDate(e.target.value)}
-                      className="w-48"
+                      className="flex-1 sm:w-48"
                     />
                   </div>
-                  <Button onClick={loadEquipmentReport} disabled={equipmentLoading} className="bg-purple-600 hover:bg-purple-700">
+                  <Button onClick={loadEquipmentReport} disabled={equipmentLoading} className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
                     {equipmentLoading ? "טוען..." : "הפק דוח ציוד"}
                   </Button>
                 </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
@@ -566,7 +565,7 @@ export default function EquipmentManagement() {
             <h1 className="text-3xl font-bold text-slate-800 mb-2">ניהול שיוכי ציוד</h1>
             <p className="text-slate-600">שיוך וניהול ציוד לחיילים</p>
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
+          <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 w-full md:w-auto">
             <Button 
               variant="outline" 
               onClick={exportData}
@@ -576,47 +575,49 @@ export default function EquipmentManagement() {
                   return type && type.serial_number;
                 }).length === 0
               }
-              className="flex-1 md:flex-none"
+              className="text-xs md:text-sm"
             >
-              <Download className="w-4 h-4 mr-2" />
-              יצוא ({assignments.filter(a => {
+              <Download className="w-4 h-4 ml-1 md:mr-2" />
+              <span className="hidden sm:inline">יצוא ({assignments.filter(a => {
                 const type = equipmentTypes.find(t => t.id === a.equipment_type_id);
                 return type && type.serial_number;
-              }).length})
+              }).length})</span>
+              <span className="inline sm:hidden">יצוא</span>
             </Button>
             <Button 
               variant="outline"
               onClick={handleSendConfirmationToAll}
               disabled={assignments.length === 0 || loading}
-              className="flex-1 md:flex-none bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+              className="text-xs md:text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
             >
-              <Mail className="w-4 h-4 mr-2" />
-              {loading ? "שולח..." : "אישור מחודש לכולם"}
+              <Mail className="w-4 h-4 ml-1 md:mr-2" />
+              <span className="hidden sm:inline">{loading ? "שולח..." : "אישור מחודש לכולם"}</span>
+              <span className="inline sm:hidden">אישור לכולם</span>
             </Button>
             <Button 
               variant="outline"
               onClick={updateSoldierDetailsInAssignments}
               disabled={loading}
-              className="flex-1 md:flex-none bg-green-50 hover-bg-green-100 text-green-700 border-green-200"
+              className="text-xs md:text-sm bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className="w-4 h-4 ml-1 md:mr-2" />
               תקן שמות
             </Button>
             <Button 
               variant="outline"
               onClick={cleanupDeletedSoldierAssignments}
               disabled={assignments.length === 0 || loading}
-              className="flex-1 md:flex-none bg-red-50 hover-bg-red-100 text-red-700 border-red-200"
+              className="text-xs md:text-sm bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="w-4 h-4 ml-1 md:mr-2" />
               נקה שיוכים
             </Button>
             <Button 
               onClick={() => setShowAssignDialog(true)}
-              className="flex-1 md:flex-none bg-gradient-to-r from-blue-600 to-blue-700"
+              className="col-span-2 md:col-span-1 bg-gradient-to-r from-blue-600 to-blue-700"
             >
               <Plus className="w-4 h-4 mr-2" />
-              שייך ציוד
+              שייך ציוד חדש
             </Button>
           </div>
         </div>
