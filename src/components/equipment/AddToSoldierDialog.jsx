@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Equipment } from "@/entities/Equipment";
 import { SendEmail } from "@/integrations/Core"; // Keep this import for fallback
 import { SoldierToken } from "@/entities/SoldierToken";
-import { Save, X, Plus, MapPin } from "lucide-react";
+import { Save, X, Plus } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Mail, PenTool } from "lucide-react";
 import DigitalSignatureDialog from "./DigitalSignatureDialog";
@@ -36,7 +35,8 @@ export default function AddToSoldierDialog({
   useEffect(() => {
     if (!open) {
       setSelectedEquipmentTypeId("");
-      setLocation("");
+      setLocation("אצל החייל");
+      setLocationDetails("");
       setIsSaving(false);
       setSignatureMethod("email");
       setShowSignatureDialog(false);
@@ -159,7 +159,8 @@ ${signatureUrl}
         soldier_id: soldierId || "",
         soldier_email: soldierEmail || "",
         equipment_type_id: selectedEquipmentTypeId,
-        location: location.trim(),
+        location: location,
+        location_details: locationDetails.trim(),
         status: "active",
         requires_soldier_confirmation: true
       });
@@ -276,15 +277,12 @@ ${signatureUrl}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                מקום הציוד
-              </Label>
-              <Input
-                id="location"
+              <Label className="font-medium">מיקום הציוד</Label>
+              <LocationSelectField
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="לדוגמה: חדר נשק, מחסן, אצל החייל..."
+                onChange={setLocation}
+                details={locationDetails}
+                onDetailsChange={setLocationDetails}
               />
             </div>
 

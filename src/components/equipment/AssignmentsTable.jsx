@@ -1,72 +1,11 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Package, Plus, Mail, Eye, MapPin, Save, User } from "lucide-react";
+import { Trash2, Package, Plus, Mail, Eye, Save, User } from "lucide-react";
 import { Equipment } from "@/entities/Equipment";
-
-// רכיב קלט שמנהל את המצב שלו באופן פנימי
-const LocationInput = React.memo(({ initialValue, onCommit }) => {
-  const [value, setValue] = useState(initialValue);
-
-  // עדכון המצב הפנימי רק אם הערך החיצוני משתנה
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  const handleChange = (e) => {
-    setValue(e.target.value);
-  };
-
-  const handleBlur = () => {
-    onCommit(value);
-  };
-
-  return (
-    <div className="flex items-center gap-2 h-7">
-      <MapPin className="w-3 h-3 text-slate-400" />
-      <Input
-        value={value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="הזן מקום..."
-        className="text-xs h-7 min-w-[120px]"
-      />
-    </div>
-  );
-});
-
-// אותו דבר עבור תצוגת מובייל
-const LocationInputMobile = React.memo(({ initialValue, onCommit }) => {
-  const [value, setValue] = useState(initialValue);
-
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  const handleChange = (e) => {
-    setValue(e.target.value);
-  };
-
-  const handleBlur = () => {
-    onCommit(value);
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <MapPin className="w-3 h-3 text-slate-400" />
-      <Input
-        value={value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="הזן מקום..."
-        className="text-sm h-8 flex-1"
-      />
-    </div>
-  );
-});
+import { LocationSelectField, getLocationColor } from "./LocationSelect";
 
 
 export default function AssignmentsTable({ 
@@ -79,18 +18,24 @@ export default function AssignmentsTable({
   onRefreshData
 }) {
   const [localLocationEdits, setLocalLocationEdits] = useState({});
+  const [localDetailsEdits, setLocalDetailsEdits] = useState({});
   const [savingLocations, setSavingLocations] = useState({});
 
-  const handleLocationCommit = useCallback((itemId, finalValue) => {
-    setLocalLocationEdits(prev => ({
-      ...prev,
-      [itemId]: finalValue
-    }));
+  const handleLocationChange = useCallback((itemId, newLocation) => {
+    setLocalLocationEdits(prev => ({ ...prev, [itemId]: newLocation }));
+  }, []);
+
+  const handleDetailsChange = useCallback((itemId, newDetails) => {
+    setLocalDetailsEdits(prev => ({ ...prev, [itemId]: newDetails }));
   }, []);
 
   const getLocationValue = useCallback((item) => {
-    return localLocationEdits[item.id] !== undefined ? localLocationEdits[item.id] : (item.location || "");
+    return localLocationEdits[item.id] !== undefined ? localLocationEdits[item.id] : (item.location || "אצל החייל");
   }, [localLocationEdits]);
+
+  const getDetailsValue = useCallback((item) => {
+    return localDetailsEdits[item.id] !== undefined ? localDetailsEdits[item.id] : (item.location_details || "");
+  }, [localDetailsEdits]);
 
   const soldierGroups = useMemo(() => {
     if (!Array.isArray(assignments)) return {};
@@ -123,16 +68,24 @@ export default function AssignmentsTable({
     
     try {
       const updatePromises = items
-        .filter(item => localLocationEdits[item.id] !== undefined)
-        .map(item => Equipment.update(item.id, { location: localLocationEdits[item.id] }));
+        .filter(item => localLocationEdits[item.id] !== undefined || localDetailsEdits[item.id] !== undefined)
+        .map(item => {
+          const updateData = {};
+          if (localLocationEdits[item.id] !== undefined) updateData.location = localLocationEdits[item.id];
+          if (localDetailsEdits[item.id] !== undefined) updateData.location_details = localDetailsEdits[item.id];
+          return Equipment.update(item.id, updateData);
+        });
       
       await Promise.all(updatePromises);
       
       setLocalLocationEdits(prev => {
         const updated = { ...prev };
-        items.forEach(item => {
-          delete updated[item.id];
-        });
+        items.forEach(item => delete updated[item.id]);
+        return updated;
+      });
+      setLocalDetailsEdits(prev => {
+        const updated = { ...prev };
+        items.forEach(item => delete updated[item.id]);
         return updated;
       });
       
@@ -144,11 +97,11 @@ export default function AssignmentsTable({
     } finally {
       setSavingLocations(prev => ({ ...prev, [soldierName]: false }));
     }
-  }, [localLocationEdits, onRefreshData]);
+  }, [localLocationEdits, localDetailsEdits, onRefreshData]);
 
   const hasLocationChanges = useCallback((items) => {
-    return items.some(item => localLocationEdits[item.id] !== undefined);
-  }, [localLocationEdits]);
+    return items.some(item => localLocationEdits[item.id] !== undefined || localDetailsEdits[item.id] !== undefined);
+  }, [localLocationEdits, localDetailsEdits]);
 
   const soldierEntries = Object.entries(soldierGroups);
 
@@ -190,11 +143,15 @@ export default function AssignmentsTable({
                       {type && type.serial_number ? ` (צ': ${type.serial_number})` : ''}
                     </Badge>
                     {hasSerialNumber(item) && (
-                      <LocationInputMobile
-                        key={`mobile-location-${item.id}`}
-                        initialValue={getLocationValue(item)}
-                        onCommit={(finalValue) => handleLocationCommit(item.id, finalValue)}
-                      />
+                      <div className="space-y-1">
+                        <LocationSelectField
+                          size="sm"
+                          value={getLocationValue(item)}
+                          onChange={(val) => handleLocationChange(item.id, val)}
+                          details={getDetailsValue(item)}
+                          onDetailsChange={(val) => handleDetailsChange(item.id, val)}
+                        />
+                      </div>
                     )}
                   </div>
                 );
@@ -304,13 +261,19 @@ export default function AssignmentsTable({
                   {data.items.map(item => (
                     <div key={`desktop-location-wrapper-${item.id}`}>
                       {hasSerialNumber(item) ? (
-                        <LocationInput
-                          key={`desktop-location-${item.id}`}
-                          initialValue={getLocationValue(item)}
-                          onCommit={(finalValue) => handleLocationCommit(item.id, finalValue)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <LocationSelectField
+                            size="sm"
+                            value={getLocationValue(item)}
+                            onChange={(val) => handleLocationChange(item.id, val)}
+                            details={getDetailsValue(item)}
+                            onDetailsChange={(val) => handleDetailsChange(item.id, val)}
+                          />
+                        </div>
                       ) : (
-                        <span className="text-xs text-slate-400">-</span>
+                        <Badge className={`text-xs ${getLocationColor(getLocationValue(item))}`}>
+                          {getLocationValue(item) || "אצל החייל"}
+                        </Badge>
                       )}
                     </div>
                   ))}

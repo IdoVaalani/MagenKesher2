@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,17 +9,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentSignature } from "@/entities/EquipmentSignature";
 import { SendEmail } from "@/integrations/Core";
-import { Save, X, MapPin, Mail, PenTool, Search } from "lucide-react";
+import { Save, X, Mail, PenTool, Search } from "lucide-react";
 import { SoldierToken } from "@/entities/SoldierToken";
 import DigitalSignatureDialog from "./DigitalSignatureDialog";
 import { AppSettings } from "@/entities/AppSettings";
 import { sendEmailHandler } from "@/functions/sendEmailHandler";
+import { LocationSelectField } from "./LocationSelect";
 
 export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, equipmentTypes, assignments, onAssignSuccess }) {
   const [selectedSoldierId, setSelectedSoldierId] = useState("");
   const [selectedEquipmentTypeIds, setSelectedEquipmentTypeIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState("אצל החייל");
+  const [locationDetails, setLocationDetails] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [signatureMethod, setSignatureMethod] = useState("email");
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
@@ -31,7 +32,8 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
       setSelectedSoldierId("");
       setSelectedEquipmentTypeIds([]);
       setSearchTerm("");
-      setLocation("");
+      setLocation("אצל החייל");
+      setLocationDetails("");
       setIsSaving(false);
       setSignatureMethod("email");
       setShowSignatureDialog(false);
@@ -160,7 +162,8 @@ ${signatureUrl}
           soldier_id: soldier.personal_id || "",
           soldier_email: soldier.email || "",
           equipment_type_id: typeId,
-          location: location.trim(),
+          location: location,
+          location_details: locationDetails.trim(),
           status: "active",
           requires_soldier_confirmation: true
         });
@@ -294,15 +297,12 @@ ${signatureUrl}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                מקום הציוד (כללי)
-              </Label>
-              <Input
-                id="location"
+              <Label className="font-medium">מיקום הציוד</Label>
+              <LocationSelectField
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="לדוגמה: חדר נשק, מחסן, אצל החייל..."
+                onChange={setLocation}
+                details={locationDetails}
+                onDetailsChange={setLocationDetails}
               />
             </div>
 
