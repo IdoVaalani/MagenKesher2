@@ -166,7 +166,7 @@ export default function Layout({ children, currentPageName }) {
 
   // הצגת ה-Layout המלא למשתמשים מחוברים
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={window.innerWidth >= 768}>
       <div className="min-h-screen flex w-full bg-slate-50" dir="rtl">
         <style>{` * { direction: rtl; }`}</style>
         <Sidebar className="border-l border-slate-200 bg-white transition-all duration-300" collapsible="offcanvas">
