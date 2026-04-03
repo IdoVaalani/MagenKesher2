@@ -2,22 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { User } from "@/entities/User";
-import { Soldier } from "@/entities/Soldier"; // Import Soldier entity
-import { ClipboardList, Package, CheckSquare, BarChart3, LogOut, Wrench, Menu, Users, Settings, Server, Beaker } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Soldier } from "@/entities/Soldier";
+import { ClipboardList, Package, CheckSquare, BarChart3, Wrench, Menu, Users, Settings, Server, X } from "lucide-react";
 
 const navigationItems = [
   { title: "לוח בקרה", url: createPageUrl("Dashboard"), icon: BarChart3, adminOnly: true },
@@ -35,110 +21,76 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); // New state to manage admin status
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // בדיקה מיידית לטוקן - זה המפתח!
   const urlParams = new URLSearchParams(location.search);
   const hasToken = !!urlParams.get('token');
 
+  // Close sidebar on route change (mobile)
   useEffect(() => {
-    // אם יש טוקן, דלג על כל בדיקות ההתחברות
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (hasToken) {
       setIsLoading(false);
       return;
     }
-
-    // אם אין טוקן, בצע התחברות רגילה
     const checkUser = async () => {
       try {
         const userData = await User.me();
         setUser(userData);
       } catch (error) {
-        User.login(); // If User.me() fails, redirect to login
+        User.login();
       } finally {
         setIsLoading(false);
       }
     };
-
     checkUser();
   }, [location.search, hasToken]);
 
-  // עדכון הלוגיקה לבדוק הרשאות מטבלת החיילים עבור ניווט אוטומטי
   useEffect(() => {
-    if (!hasToken && user) { // Only run if not using token and user data is available
+    if (!hasToken && user) {
       const checkUserRoleAndNavigate = async () => {
         try {
-          // בדיקה אם המשתמש הוא admin ברמת המערכת
-          if (user.role === 'admin') {
-            return; // מנהל מערכת - גישה מלאה, אין צורך להפנות
-          }
-
-          // בדיקה אם המשתמש מוגדר כמנהל בטבלת החיילים
+          if (user.role === 'admin') return;
           const soldiers = await Soldier.list();
           const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
-
-          // אם החייל מוגדר כמנהל בטבלת החיילים, אפשר לו גישה מלאה
-          if (soldierRecord && soldierRecord.role === 'admin') {
-            return; // מנהל חייל - גישה מלאה
-          }
-
-          // אחרת, זה חייל רגיל - הפנה לדף האישור היומי
+          if (soldierRecord && soldierRecord.role === 'admin') return;
           const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
           if (location.pathname !== dailyConfirmationUrl) {
             navigate(dailyConfirmationUrl, { replace: true });
           }
         } catch (error) {
-          console.error("Error checking user role for navigation:", error);
-          // במקרה של שגיאה בבדיקת תפקיד חייל, הפנה לדף האישור היומי כברירת מחדל
           const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
           if (location.pathname !== dailyConfirmationUrl) {
             navigate(dailyConfirmationUrl, { replace: true });
           }
         }
       };
-
       checkUserRoleAndNavigate();
     }
-  }, [user, location.pathname, navigate, hasToken]); // Dependencies for this effect
+  }, [user, location.pathname, navigate, hasToken]);
 
-  // בדיקה מעודכנת של הרשאות המשתמש ושמירה במצב isAdmin
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) {
-        setIsAdmin(false); // No user, not admin
-        return;
-      }
-
-      // בדיקה אם המשתמש הוא admin ברמת המערכת (לפי השדה user.role)
-      if (user.role === 'admin') {
-        setIsAdmin(true);
-        return;
-      }
-
+      if (!user) { setIsAdmin(false); return; }
+      if (user.role === 'admin') { setIsAdmin(true); return; }
       try {
-        // בדיקה אם המשתמש מוגדר כמנהל בטבלת החיילים (לפי השדה role ב-Soldier)
         const soldiers = await Soldier.list();
         const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
         setIsAdmin(soldierRecord && soldierRecord.role === 'admin');
       } catch (error) {
-        console.error("Error checking admin status:", error);
-        setIsAdmin(false); // Default to not admin on error
+        setIsAdmin(false);
       }
     };
-
     checkAdminStatus();
-  }, [user]); // Re-run this effect whenever the user object changes
+  }, [user]);
 
-  const handleLogout = async () => {
-    await User.logout();
-    window.location.reload();
-  };
-
-  // אם יש טוקן, הצג את הדף ישירות ללא Layout
   if (hasToken) {
     return (
       <div className="min-h-screen bg-slate-50" dir="rtl">
-        {/* סטיילינג בסיסי לדפי טוקן */}
         <style>{`
           * { direction: rtl; }
           @media (max-width: 768px) {
@@ -151,8 +103,6 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // מסך טעינה בזמן בדיקת ההתחברות
-  // Show loading screen if data is being fetched or if user is null and not using a token
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -164,76 +114,105 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // הצגת ה-Layout המלא למשתמשים מחוברים
-  return (
-    <SidebarProvider defaultOpen={window.innerWidth >= 768}>
-      <div className="min-h-screen flex w-full bg-slate-50" dir="rtl">
-        <style>{` * { direction: rtl; }`}</style>
-        <Sidebar className="border-l border-slate-200 bg-white transition-all duration-300" collapsible="offcanvas">
-          <SidebarHeader className="border-b border-slate-200 p-4 md:p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
-                <ClipboardList className="w-4 h-4 md:w-6 md:h-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="font-bold text-slate-800 text-base md:text-lg">פלוגה ב'</h2>
-                <p className="text-xs text-slate-500">ניהול ציוד פלוגתי</p>
-              </div>
-            </div>
-          </SidebarHeader>
-          <SidebarContent className="p-2 md:p-3">
-             <SidebarGroup>
-                <SidebarGroupLabel className="text-xs font-medium text-slate-500 uppercase tracking-wider px-3 py-3">תפריט ראשי</SidebarGroupLabel>
-                <SidebarGroupContent>
-                    <SidebarMenu>
-                        {/* Filter navigation items based on the new isAdmin state */}
-                        {navigationItems.filter(item => !item.adminOnly || isAdmin).map(item => (
-                            <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton asChild className={`hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 rounded-xl mb-2 text-slate-700 min-h-[44px] ${location.pathname.startsWith(item.url) ? 'bg-blue-50 text-blue-600 font-semibold' : ''}`}>
-                                    <Link to={item.url} className="flex items-center gap-3 px-3 md:px-4 py-3 text-sm md:text-base">
-                                        <item.icon className={`w-5 h-5 ${location.pathname.startsWith(item.url) ? 'text-blue-600' : 'text-slate-500'}`} />
-                                        <span className="font-medium">{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroupContent>
-             </SidebarGroup>
-          </SidebarContent>
-          <SidebarFooter className="border-t border-slate-200 p-3 md:p-4">
-              <div className="flex items-center justify-between">
-                {user && (
-                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">{user.full_name?.charAt(0) || 'U'}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="font-medium text-slate-800 text-sm truncate">{user.full_name}</p>
-                            {/* Display role based on isAdmin state */}
-                            <p className="text-xs text-slate-500 truncate">{isAdmin ? 'מנהל מערכת' : 'חייל'}</p>
-                        </div>
-                    </div>
-                )}
-                <SidebarTrigger className="bg-slate-100 text-slate-300 p-2 text-sm font-medium inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:text-accent-foreground h-8 w-8 hover:bg-slate-100 rounded-lg transition-colors duration-200">
-                    <Menu className="w-5 h-5 text-slate-500" />
-                </SidebarTrigger>
-              </div>
-          </SidebarFooter>
-        </Sidebar>
+  const visibleItems = navigationItems.filter(item => !item.adminOnly || isAdmin);
 
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-4 md:px-6 py-3 md:py-4 shadow-sm">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200">
-                <Menu className="w-5 h-5 text-slate-600" />
-              </SidebarTrigger>
-              <h1 className="text-lg md:text-xl font-bold text-slate-800">פלוגה ב'</h1>
-            </div>
-          </header>
-          <div className="flex-1 overflow-auto">{children}</div>
-        </main>
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="border-b border-slate-200 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
+            <ClipboardList className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-bold text-slate-800 text-base">פלוגה ב'</h2>
+            <p className="text-xs text-slate-500">ניהול ציוד פלוגתי</p>
+          </div>
+        </div>
+        <button
+          className="md:hidden p-2 rounded-lg hover:bg-slate-100"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X className="w-5 h-5 text-slate-500" />
+        </button>
       </div>
-    </SidebarProvider>
+
+      {/* Nav items */}
+      <nav className="flex-1 p-3 overflow-y-auto">
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 py-2">תפריט ראשי</p>
+        {visibleItems.map(item => {
+          const isActive = location.pathname.startsWith(item.url);
+          return (
+            <Link
+              key={item.title}
+              to={item.url}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-1 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <item.icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-500'}`} />
+              <span>{item.title}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-slate-200 p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-sm">{user.full_name?.charAt(0) || 'U'}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="font-medium text-slate-800 text-sm truncate">{user.full_name}</p>
+            <p className="text-xs text-slate-500">{isAdmin ? 'מנהל מערכת' : 'חייל'}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex w-full bg-slate-50" dir="rtl">
+      <style>{`* { direction: rtl; }`}</style>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex md:w-64 shrink-0 flex-col border-l border-slate-200 bg-white h-screen sticky top-0">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside className={`fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 md:hidden ${
+        sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <SidebarContent />
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-4 py-3 shadow-sm sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <button
+              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="w-5 h-5 text-slate-600" />
+            </button>
+            <h1 className="text-lg font-bold text-slate-800">פלוגה ב'</h1>
+          </div>
+        </header>
+        <div className="flex-1 overflow-auto">{children}</div>
+      </main>
+    </div>
   );
 }
