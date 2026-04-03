@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -167,10 +166,10 @@ export default function Layout({ children, currentPageName }) {
 
   // הצגת ה-Layout המלא למשתמשים מחוברים
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-slate-50" dir="rtl">
         <style>{` * { direction: rtl; }`}</style>
-        <Sidebar className="border-l border-slate-200 bg-white transition-all duration-300" collapsible="icon">
+        <Sidebar className="border-l border-slate-200 bg-white transition-all duration-300" collapsible="offcanvas">
           <SidebarHeader className="border-b border-slate-200 p-4 md:p-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
