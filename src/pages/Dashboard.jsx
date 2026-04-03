@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from "react";
-import { useCompany } from "@/components/CompanyContext";
 import { User } from "@/entities/User";
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
@@ -252,7 +252,6 @@ const DetailsDialog = ({ open, onOpenChange, dialogData, dialogType }) => {
 
 
 export default function Dashboard() {
-  const { currentCompany } = useCompany();
   const [stats, setStats] = useState({
     totalSoldiers: 0,
     totalEquipment: 0,
@@ -283,10 +282,8 @@ export default function Dashboard() {
   const [selectedPartialSoldier, setSelectedPartialSoldier] = useState(null);
 
   useEffect(() => {
-    if (currentCompany) {
-      loadDashboardData();
-    }
-  }, [currentCompany]);
+    loadDashboardData();
+  }, []);
 
   const generateSoldierToken = async (soldierName, soldierEmail, type = "daily_confirmation", metadata = null, soldierId = null) => {
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -294,7 +291,6 @@ export default function Dashboard() {
     expiresAt.setHours(expiresAt.getHours() + 48);
     
     await SoldierToken.create({
-      company_id: currentCompany.id,
       soldier_name: soldierName,
       soldier_email: soldierEmail,
       soldier_id: soldierId || '',
@@ -321,11 +317,11 @@ export default function Dashboard() {
         allOpenReports,
         allEquipmentTypes
       ] = await Promise.all([
-        Equipment.filter({ company_id: currentCompany.id, status: 'active' }),
-        DailyConfirmation.filter({ company_id: currentCompany.id, confirmation_date: today }),
-        Soldier.filter({ company_id: currentCompany.id }),
-        DailyConfirmation.filter({ company_id: currentCompany.id, report_handled: false }),
-        EquipmentType.filter({ company_id: currentCompany.id })
+        Equipment.filter({ status: 'active' }),
+        DailyConfirmation.filter({ confirmation_date: today }),
+        Soldier.list(),
+        DailyConfirmation.filter({ report_handled: false }),
+        EquipmentType.list()
       ]);
       
       setAllSoldiers(soldiersList);
@@ -429,7 +425,6 @@ export default function Dashboard() {
       setPendingNames(confirmationsByName.filter(item => !item.confirmed).map(item => item.soldierName));
       
       await SystemLog.create({
-        company_id: currentCompany.id,
         message: `נתוני לוח הבקרה נטעו: ${soldierNames.length} חיילים, ${confirmed} אישרו במלואו, ${pending} ממתינים.`,
         level: 'info',
         category: 'data'
@@ -439,7 +434,6 @@ export default function Dashboard() {
       console.error("Error loading dashboard data:", err);
       setError("שגיאה בטעינת נתונים");
       await SystemLog.create({
-        company_id: currentCompany.id,
         message: `שגיאה בטעינת נתוני לוח הבקרה: ${err.message}`,
         level: 'error',
         category: 'data'
@@ -478,7 +472,6 @@ export default function Dashboard() {
         try {
           await sendSms({ phoneNumber: soldierPhone, message: smsMessage });
           await SystemLog.create({
-            company_id: currentCompany.id,
             message: `בקשת אישור SMS נשלחה בהצלחה ל-${soldierName} (${soldierPhone}).`,
             level: 'info',
             category: 'communication'
@@ -486,7 +479,6 @@ export default function Dashboard() {
         } catch (smsError) {
           console.error(`SMS failed for ${soldierName}:`, smsError);
           await SystemLog.create({
-            company_id: currentCompany.id,
             message: `כשל בשליחת SMS ל-${soldierName} (${soldierPhone}): ${smsError.message}`,
             level: 'error',
             category: 'communication'
@@ -505,7 +497,6 @@ export default function Dashboard() {
               
               console.log(`SMS failed for ${soldierName}, but email sent successfully as fallback`);
               await SystemLog.create({
-                company_id: currentCompany.id,
                 message: `SMS נכשל עבור ${soldierName}, אך מייל גיבוי נשלח בהצלחה ל-${soldierEmail}.`,
                 level: 'info',
                 category: 'communication'
@@ -514,7 +505,6 @@ export default function Dashboard() {
             } catch (emailError) {
               console.error(`Both SMS and email failed for ${soldierName}:`, { smsError, emailError });
               await SystemLog.create({
-                company_id: currentCompany.id,
                 message: `גם SMS וגם מייל גיבוי נכשלו עבור ${soldierName}: SMS: ${smsError.message}, Email: ${emailError.message}`,
                 level: 'error',
                 category: 'communication'
@@ -523,7 +513,6 @@ export default function Dashboard() {
             }
           } else {
             await SystemLog.create({
-              company_id: currentCompany.id,
               message: `SMS נכשל עבור ${soldierName}, ואין אימייל גיבוי זמין. שגיאת SMS: ${smsError.message}`,
               level: 'warning',
               category: 'communication'
@@ -561,7 +550,6 @@ export default function Dashboard() {
         });
 
         await SystemLog.create({
-            company_id: currentCompany.id,
             message: `הפנייה של ${report.soldier_name} סומנה כטופלה ונשלח מייל עדכון ל-${soldier.email}.`,
             level: 'info',
             category: 'report'
@@ -573,7 +561,6 @@ export default function Dashboard() {
         console.error("Error marking report as handled:", error);
         alert(`שגיאה בטיפול בפנייה: ${error.message}`);
         await SystemLog.create({
-            company_id: currentCompany.id,
             message: `שגיאה בטיפול בפנייה של ${report.soldier_name}: ${error.message}`,
             level: 'error',
             category: 'report'
@@ -591,7 +578,6 @@ export default function Dashboard() {
     setIsSending(true);
 
     await SystemLog.create({
-      company_id: currentCompany.id,
       message: `התחלת שליחת ${actionText} ל-${targetSoldiers.length} חיילים.`,
       level: 'info',
       category: 'communication'
@@ -600,8 +586,8 @@ export default function Dashboard() {
     try {
       const [allUsers, soldierDataList, settingsData] = await Promise.all([
         User.list(),
-        Soldier.filter({ company_id: currentCompany.id }),
-        AppSettings.filter({ company_id: currentCompany.id }, null, 1)
+        Soldier.list(),
+        AppSettings.list(null, 1)
       ]);
 
       const settings = settingsData?.[0] || {};
@@ -646,7 +632,6 @@ export default function Dashboard() {
           results.unreachable++;
           unreachableSoldiers.push(`${name} (${soldierEmail} - לא רשום)`);
           await SystemLog.create({
-            company_id: currentCompany.id,
             message: `דלוג שליחת ${actionText} לחייל ${name}: המייל לא רשום (נדרש עבור שיטת 'email' המובנית).`,
             level: 'warning',
             category: 'communication'
@@ -665,7 +650,6 @@ export default function Dashboard() {
           console.error(`Failed to send to ${name}:`, error);
           results.error++;
           await SystemLog.create({
-            company_id: currentCompany.id,
             message: `כשל בשליחה ל-${name}: ${error.message}`,
             level: 'error',
             category: 'communication'
@@ -684,7 +668,6 @@ export default function Dashboard() {
       alert(message);
 
       await SystemLog.create({
-        company_id: currentCompany.id,
         message: `סיכום שליחת ${actionText}: ${results.email} מיילים, ${results.sms} SMS, ${results.unreachable} לא נשלח, ${results.error} שגיאות.`,
         level: 'info',
         category: 'communication'
@@ -694,7 +677,6 @@ export default function Dashboard() {
       console.error(`Error in sendMassConfirmation:`, error);
       alert(`שגיאה כללית בשליחת ה${actionText}.`);
       await SystemLog.create({
-        company_id: currentCompany.id,
         message: `שגיאה כללית בשליחת ${actionText}: ${error.message}`,
         level: 'error',
         category: 'communication'
@@ -721,9 +703,9 @@ export default function Dashboard() {
     try {
       switch (cardType) {
         case 'soldiers':
-          const allEquipmentForSoldiers = await Equipment.filter({ company_id: currentCompany.id, requires_soldier_confirmation: true, status: 'active' });
+          const allEquipmentForSoldiers = await Equipment.filter({ requires_soldier_confirmation: true, status: 'active' });
           const today = new Date().toISOString().split('T')[0];
-          const todayConfirmations = await DailyConfirmation.filter({ company_id: currentCompany.id, confirmation_date: today });
+          const todayConfirmations = await DailyConfirmation.filter({ confirmation_date: today });
 
           const equipmentCounts = allEquipmentForSoldiers.reduce((acc, eq) => {
             if (eq.soldier_name) {
@@ -754,11 +736,10 @@ export default function Dashboard() {
 
         case 'equipment':
           const allEquipment = await Equipment.filter({ 
-            company_id: currentCompany.id,
             requires_soldier_confirmation: true, 
             status: 'active' 
           });
-          const allTypes = await EquipmentType.filter({ company_id: currentCompany.id });
+          const allTypes = await EquipmentType.list();
           const typesMap = new Map(allTypes.map(t => [t.id, t]));
           
           const equipmentData = allEquipment.map(eq => ({
@@ -783,7 +764,7 @@ export default function Dashboard() {
           break;
 
         case 'pending':
-          const allSoldiersForPending = await Soldier.filter({ company_id: currentCompany.id });
+          const allSoldiersForPending = await Soldier.list();
           const soldierMapForPending = new Map(allSoldiersForPending.map(s => [s.full_name, s]));
           
           const pendingData = confirmationData
@@ -801,13 +782,12 @@ export default function Dashboard() {
 
         case 'unconfirmed_serial':
           const equipmentWithSerials = await Equipment.filter({ 
-              company_id: currentCompany.id,
               requires_soldier_confirmation: true, 
               status: 'active' 
           });
           const currentToday = new Date().toISOString().split('T')[0];
-          const currentTodayConfirmations = await DailyConfirmation.filter({ company_id: currentCompany.id, confirmation_date: currentToday });
-          const currentAllTypes = await EquipmentType.filter({ company_id: currentCompany.id });
+          const currentTodayConfirmations = await DailyConfirmation.filter({ confirmation_date: currentToday });
+          const currentAllTypes = await EquipmentType.list();
           const currentTypesMap = new Map(currentAllTypes.map(t => [t.id, t]));
 
           const confirmedEquipmentIdsBySoldierForDialog = new Map();
@@ -884,7 +864,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
+    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>

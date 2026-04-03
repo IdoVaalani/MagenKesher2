@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, RefreshCw, Shield, MapPin, BadgeCheck } from "lucide-react";
+import { CheckCircle, AlertCircle, RefreshCw, Package, Shield, MapPin, BadgeCheck } from "lucide-react";
 
 export default function DailyConfirmation() {
   const [soldierData, setSoldierData] = useState(null);

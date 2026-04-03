@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from "react";
-import { useCompany } from "@/components/CompanyContext";
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
 import { Soldier } from "@/entities/Soldier";
@@ -19,10 +19,8 @@ import AssignmentsTable from "../components/equipment/AssignmentsTable";
 import AssignEquipmentDialog from "../components/equipment/AssignEquipmentDialog";
 import AddToSoldierDialog from "../components/equipment/AddToSoldierDialog";
 import SoldierEquipmentDetailsDialog from "../components/equipment/SoldierEquipmentDetailsDialog";
-import TransferEquipmentDialog from "../components/equipment/TransferEquipmentDialog";
 
 export default function EquipmentManagement() {
-  const { currentCompany } = useCompany();
   const [assignments, setAssignments] = useState([]);
   const [equipmentTypes, setEquipmentTypes] = useState([]);
   const [soldiers, setSoldiers] = useState([]);
@@ -34,14 +32,10 @@ export default function EquipmentManagement() {
   const [selectedSoldierForAdd, setSelectedSoldierForAdd] = useState(null);
   const [showSoldierDetailsDialog, setShowSoldierDetailsDialog] = useState(false);
   const [selectedSoldierForDetails, setSelectedSoldierForDetails] = useState(null);
-  const [showTransferDialog, setShowTransferDialog] = useState(false);
-  const [selectedEquipmentForTransfer, setSelectedEquipmentForTransfer] = useState(null);
 
   useEffect(() => {
-    if (currentCompany) {
-      loadData();
-    }
-  }, [currentCompany]);
+    loadData();
+  }, []);
 
   useEffect(() => {
     if (!showSoldierDetailsDialog) {
@@ -69,9 +63,9 @@ export default function EquipmentManagement() {
       };
 
       const [assignmentsResult, typesResult, soldiersResult] = await Promise.allSettled([
-        loadWithRetry(() => Equipment.filter({ company_id: currentCompany.id }, "-created_date"), "Equipment"),
-        loadWithRetry(() => EquipmentType.filter({ company_id: currentCompany.id }), "EquipmentType"),
-        loadWithRetry(() => Soldier.filter({ company_id: currentCompany.id }), "Soldier"),
+        loadWithRetry(() => Equipment.list("-created_date"), "Equipment"),
+        loadWithRetry(() => EquipmentType.list(), "EquipmentType"),
+        loadWithRetry(() => Soldier.list(), "Soldier"),
       ]);
       
       const loadedAssignments = assignmentsResult.status === 'fulfilled' ? assignmentsResult.value : [];
@@ -99,37 +93,19 @@ export default function EquipmentManagement() {
     }));
   };
 
-  const [showStorageFilter, setShowStorageFilter] = useState(false);
-
   const filteredAssignments = React.useMemo(() => {
-    let filtered = assignments;
-    
-    // סינון לפי משקשייה
-    if (showStorageFilter) {
-      filtered = filtered.filter(a => 
-        a.soldier_name === '🏢 משקשייה (חדר נשק)' || 
-        a.soldier_name?.includes('משקשייה') ||
-        !a.soldier_name || 
-        a.soldier_name.trim() === ''
-      );
-    }
-    
-    // סינון לפי חיפוש
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(assignment => {
-        if (assignment.soldier_name?.toLowerCase().includes(searchLower)) return true;
-        const equipmentType = equipmentTypes.find(type => type.id === assignment.equipment_type_id);
-        if (equipmentType) {
-          if (equipmentType.serial_number?.toString().toLowerCase().includes(searchLower)) return true;
-          if (equipmentType.name?.toLowerCase().includes(searchLower)) return true;
-        }
-        return false;
-      });
-    }
-    
-    return filtered;
-  }, [assignments, equipmentTypes, searchTerm, showStorageFilter]);
+    if (!searchTerm.trim()) return assignments;
+    const searchLower = searchTerm.toLowerCase().trim();
+    return assignments.filter(assignment => {
+      if (assignment.soldier_name?.toLowerCase().includes(searchLower)) return true;
+      const equipmentType = equipmentTypes.find(type => type.id === assignment.equipment_type_id);
+      if (equipmentType) {
+        if (equipmentType.serial_number?.toString().toLowerCase().includes(searchLower)) return true;
+        if (equipmentType.name?.toLowerCase().includes(searchLower)) return true;
+      }
+      return false;
+    });
+  }, [assignments, equipmentTypes, searchTerm]);
 
   const updateSoldierDetailsInAssignments = async () => {
     if (!window.confirm("האם אתה בטוח? פעולה זו תתקן שמות חיילים שהתקלקלו.")) return;
@@ -221,24 +197,12 @@ export default function EquipmentManagement() {
     setShowSoldierDetailsDialog(true);
   };
 
-  const handleTransferEquipment = (equipment) => {
-    setSelectedEquipmentForTransfer(equipment);
-    setShowTransferDialog(true);
-  };
-
-  const handleTransferComplete = () => {
-    setShowTransferDialog(false);
-    setSelectedEquipmentForTransfer(null);
-    loadData();
-  };
-
   const generateSoldierToken = async (soldierName, soldierEmail, type = "daily_confirmation", metadata = null, soldierId = null) => {
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 48);
     
     await SoldierToken.create({
-      company_id: currentCompany.id,
       soldier_name: soldierName,
       soldier_email: soldierEmail,
       soldier_id: soldierId || '',
@@ -381,9 +345,9 @@ export default function EquipmentManagement() {
       
     try {
       const [settingsData, users, allSoldiers] = await Promise.all([
-          AppSettings.filter({ company_id: currentCompany.id }, null, 1),
+          AppSettings.list(null, 1),
           User.list(),
-          Soldier.filter({ company_id: currentCompany.id })
+          Soldier.list()
       ]);
       const settings = settingsData?.[0] || {};
       let commMethod = settings.default_communication_method || 'email';
@@ -408,7 +372,7 @@ export default function EquipmentManagement() {
 
       let confirmationWasReset = false;
       const today = new Date().toISOString().split('T')[0];
-      const existingConfirmations = await DailyConfirmationEntity.filter({ company_id: currentCompany.id, soldier_name: soldierName, confirmation_date: today });
+      const existingConfirmations = await DailyConfirmationEntity.filter({ soldier_name: soldierName, confirmation_date: today });
 
       if (existingConfirmations && existingConfirmations.length > 0) {
           await DailyConfirmationEntity.delete(existingConfirmations[0].id);
@@ -462,8 +426,8 @@ export default function EquipmentManagement() {
     try {
         const [allUsers, soldierDataList, settingsData] = await Promise.all([
             User.list(),
-            Soldier.filter({ company_id: currentCompany.id }),
-            AppSettings.filter({ company_id: currentCompany.id }, null, 1)
+            Soldier.list(),
+            AppSettings.list(null, 1)
         ]);
 
         const settings = settingsData?.[0] || {};
@@ -472,10 +436,9 @@ export default function EquipmentManagement() {
         const registeredEmails = new Set(allUsers.map(u => u.email?.toLowerCase()).filter(Boolean));
         
         const soldierGroups = assignments.reduce((acc, assignment) => {
-            const soldierKey = assignment?.soldier_name && assignment.soldier_name.trim() 
-                ? assignment.soldier_name 
-                : '🏢 משקשייה (חדר נשק)';
-            (acc[soldierKey] = acc[soldierKey] || []).push(assignment);
+            if (assignment?.soldier_name) {
+                (acc[assignment.soldier_name] = acc[assignment.soldier_name] || []).push(assignment);
+            }
             return acc;
         }, {});
         
@@ -596,7 +559,7 @@ export default function EquipmentManagement() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
+    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
@@ -663,30 +626,20 @@ export default function EquipmentManagement() {
             <CardTitle className="text-xl font-bold text-slate-800">
               סיכום שיוכים
             </CardTitle>
-            <div className="mt-4 space-y-3">
-              <div className="flex gap-3 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                  <Input
-                    type="text"
-                    placeholder="חפש לפי שם חייל, מספר צ' או שם ציוד..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pr-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <Button
-                  variant={showStorageFilter ? "default" : "outline"}
-                  onClick={() => setShowStorageFilter(!showStorageFilter)}
-                  className={showStorageFilter ? "bg-blue-600" : ""}
-                >
-                  🏢 משקשייה בלבד
-                </Button>
+            <div className="mt-4">
+              <div className="relative max-w-md">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="חפש לפי שם חייל, מספר צ' או שם ציוד..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                />
               </div>
-              {(searchTerm || showStorageFilter) && (
-                <p className="text-sm text-slate-600">
+              {searchTerm && (
+                <p className="text-sm text-slate-600 mt-2">
                   מציג {filteredAssignments.length} תוצאות מתוך {assignments.length} שיוכים
-                  {showStorageFilter && " (משקשייה)"}
                 </p>
               )}
             </div>
@@ -717,7 +670,6 @@ export default function EquipmentManagement() {
                 onSendConfirmationRequest={handleSendSingleConfirmation}
                 onShowSoldierDetails={handleShowSoldierDetails}
                 onRefreshData={loadData}
-                onTransferEquipment={handleTransferEquipment}
                 locationUpdates={locationUpdates}
                 onLocationChange={handleLocationChange}
                 setLocationUpdates={setLocationUpdates}
@@ -757,15 +709,6 @@ export default function EquipmentManagement() {
           allEquipmentTypes={equipmentTypes}
           allAssignments={assignments}
           onRefreshData={loadData}
-        />
-      )}
-
-      {selectedEquipmentForTransfer && (
-        <TransferEquipmentDialog
-          open={showTransferDialog}
-          onOpenChange={setShowTransferDialog}
-          equipment={selectedEquipmentForTransfer}
-          onTransferComplete={handleTransferComplete}
         />
       )}
     </div>

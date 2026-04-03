@@ -1,0 +1,62 @@
+{
+  "name": "DailyConfirmation",
+  "type": "object",
+  "properties": {
+    "soldier_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05d7\u05d9\u05d9\u05dc"
+    },
+    "soldier_id": {
+      "type": "string",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d0\u05d9\u05e9\u05d9 \u05e9\u05dc \u05d4\u05d7\u05d9\u05d9\u05dc"
+    },
+    "confirmation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d4\u05d0\u05d9\u05e9\u05d5\u05e8"
+    },
+    "equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u05de\u05d6\u05d4\u05d9 \u05d4\u05e6\u05d9\u05d5\u05d3 \u05e9\u05d0\u05d5\u05e9\u05e8"
+    },
+    "total_equipment_count": {
+      "type": "number",
+      "description": "\u05db\u05de\u05d5\u05ea \u05db\u05d5\u05dc\u05dc\u05ea \u05e9\u05dc \u05e4\u05e8\u05d9\u05d8\u05d9 \u05d4\u05e6\u05d9\u05d5\u05d3 \u05e9\u05dc \u05d4\u05d7\u05d9\u05d9\u05dc"
+    },
+    "is_complete_confirmation": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05d7\u05d9\u05d9\u05dc \u05d0\u05d9\u05e9\u05e8 \u05d0\u05ea \u05db\u05dc \u05d4\u05e6\u05d9\u05d5\u05d3 \u05e9\u05dc\u05d5"
+    },
+    "confirmation_time": {
+      "type": "string",
+      "format": "time",
+      "description": "\u05e9\u05e2\u05ea \u05d4\u05d0\u05d9\u05e9\u05d5\u05e8"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea IP"
+    },
+    "device_info": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d3\u05e2 \u05e2\u05dc \u05d4\u05de\u05db\u05e9\u05d9\u05e8"
+    },
+    "report_details": {
+      "type": "string",
+      "description": "\u05d3\u05d9\u05d5\u05d5\u05d7 \u05e2\u05dc \u05e6\u05d9\u05d5\u05d3 \u05d7\u05e1\u05e8 \u05d0\u05d5 \u05ea\u05e7\u05d5\u05dc"
+    },
+    "report_handled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05d3\u05d9\u05d5\u05d5\u05d7 \u05d8\u05d5\u05e4\u05dc \u05e2\u05dc \u05d9\u05d3\u05d9 \u05d4\u05de\u05e0\u05d4\u05dc"
+    }
+  },
+  "required": [
+    "soldier_name",
+    "confirmation_date",
+    "equipment_ids"
+  ]
+}

@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { User } from "@/entities/User";
-import { Soldier } from "@/entities/Soldier";
-import { CompanyProvider, useCompany } from "@/components/CompanyContext";
-import { ClipboardList, Package, CheckSquare, BarChart3, LogOut, Wrench, Menu, Users, Settings, Server, Building2, ChevronDown } from "lucide-react";
+import { Soldier } from "@/entities/Soldier"; // Import Soldier entity
+import { ClipboardList, Package, CheckSquare, BarChart3, LogOut, Wrench, Menu, Users, Settings, Server, Beaker } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,12 +19,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const navigationItems = [
   { title: "לוח בקרה", url: createPageUrl("Dashboard"), icon: BarChart3, adminOnly: true },
@@ -37,29 +31,31 @@ const navigationItems = [
   { title: "אישור יומי", url: createPageUrl("DailyConfirmation"), icon: CheckSquare, adminOnly: false },
 ];
 
-function LayoutContent({ children, currentPageName }) {
+export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const { currentCompany, companies, loading: companiesLoading, switchCompany } = useCompany();
+  const [isAdmin, setIsAdmin] = useState(false); // New state to manage admin status
 
+  // בדיקה מיידית לטוקן - זה המפתח!
   const urlParams = new URLSearchParams(location.search);
   const hasToken = !!urlParams.get('token');
 
   useEffect(() => {
+    // אם יש טוקן, דלג על כל בדיקות ההתחברות
     if (hasToken) {
       setIsLoading(false);
       return;
     }
 
+    // אם אין טוקן, בצע התחברות רגילה
     const checkUser = async () => {
       try {
         const userData = await User.me();
         setUser(userData);
       } catch (error) {
-        User.login();
+        User.login(); // If User.me() fails, redirect to login
       } finally {
         setIsLoading(false);
       }
@@ -68,35 +64,33 @@ function LayoutContent({ children, currentPageName }) {
     checkUser();
   }, [location.search, hasToken]);
 
-  // בדיקה אם יש פלוגה - אם לא, הפנה להרשמה
+  // עדכון הלוגיקה לבדוק הרשאות מטבלת החיילים עבור ניווט אוטומטי
   useEffect(() => {
-    const companyRegUrl = createPageUrl("CompanyRegistration");
-    if (!hasToken && user && !companiesLoading && companies.length === 0 && location.pathname !== companyRegUrl) {
-      navigate(companyRegUrl, { replace: true });
-    }
-  }, [user, companiesLoading, companies, hasToken, navigate, location.pathname]);
-
-  useEffect(() => {
-    if (!hasToken && user && currentCompany) {
+    if (!hasToken && user) { // Only run if not using token and user data is available
       const checkUserRoleAndNavigate = async () => {
         try {
+          // בדיקה אם המשתמש הוא admin ברמת המערכת
           if (user.role === 'admin') {
-            return;
+            return; // מנהל מערכת - גישה מלאה, אין צורך להפנות
           }
 
-          const soldiers = await Soldier.filter({ company_id: currentCompany.id });
+          // בדיקה אם המשתמש מוגדר כמנהל בטבלת החיילים
+          const soldiers = await Soldier.list();
           const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
 
+          // אם החייל מוגדר כמנהל בטבלת החיילים, אפשר לו גישה מלאה
           if (soldierRecord && soldierRecord.role === 'admin') {
-            return;
+            return; // מנהל חייל - גישה מלאה
           }
 
+          // אחרת, זה חייל רגיל - הפנה לדף האישור היומי
           const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
           if (location.pathname !== dailyConfirmationUrl) {
             navigate(dailyConfirmationUrl, { replace: true });
           }
         } catch (error) {
           console.error("Error checking user role for navigation:", error);
+          // במקרה של שגיאה בבדיקת תפקיד חייל, הפנה לדף האישור היומי כברירת מחדל
           const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
           if (location.pathname !== dailyConfirmationUrl) {
             navigate(dailyConfirmationUrl, { replace: true });
@@ -106,32 +100,35 @@ function LayoutContent({ children, currentPageName }) {
 
       checkUserRoleAndNavigate();
     }
-  }, [user, currentCompany, location.pathname, navigate, hasToken]);
+  }, [user, location.pathname, navigate, hasToken]); // Dependencies for this effect
 
+  // בדיקה מעודכנת של הרשאות המשתמש ושמירה במצב isAdmin
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user || !currentCompany) {
-        setIsAdmin(false);
+      if (!user) {
+        setIsAdmin(false); // No user, not admin
         return;
       }
 
+      // בדיקה אם המשתמש הוא admin ברמת המערכת (לפי השדה user.role)
       if (user.role === 'admin') {
         setIsAdmin(true);
         return;
       }
 
       try {
-        const soldiers = await Soldier.filter({ company_id: currentCompany.id });
+        // בדיקה אם המשתמש מוגדר כמנהל בטבלת החיילים (לפי השדה role ב-Soldier)
+        const soldiers = await Soldier.list();
         const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
         setIsAdmin(soldierRecord && soldierRecord.role === 'admin');
       } catch (error) {
         console.error("Error checking admin status:", error);
-        setIsAdmin(false);
+        setIsAdmin(false); // Default to not admin on error
       }
     };
 
     checkAdminStatus();
-  }, [user, currentCompany]);
+  }, [user]); // Re-run this effect whenever the user object changes
 
   const handleLogout = async () => {
     await User.logout();
@@ -155,7 +152,9 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  if (isLoading || companiesLoading) {
+  // מסך טעינה בזמן בדיקת ההתחברות
+  // Show loading screen if data is being fetched or if user is null and not using a token
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center p-6">
@@ -166,78 +165,22 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center p-6">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600 text-lg">מתחבר...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // אפשר גישה לדף הרשמת פלוגה גם ללא פלוגה
-  const companyRegUrl = createPageUrl("CompanyRegistration");
-  if (!currentCompany && companies.length === 0 && location.pathname !== companyRegUrl) {
-    return null;
-  }
-
-  // דף הרשמת פלוגה ללא Sidebar
-  if (location.pathname === companyRegUrl || currentPageName === "CompanyRegistration") {
-    return (
-      <div className="min-h-screen bg-slate-50" dir="rtl">
-        <style>{` * { direction: rtl; }`}</style>
-        {children}
-      </div>
-    );
-  }
-
   // הצגת ה-Layout המלא למשתמשים מחוברים
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-slate-50" dir="rtl">
         <style>{` * { direction: rtl; }`}</style>
-        <Sidebar className="border-r border-slate-200 bg-white transition-all duration-300" collapsible="icon" side="right">
+        <Sidebar className="border-l border-slate-200 bg-white transition-all duration-300" collapsible="icon">
           <SidebarHeader className="border-b border-slate-200 p-4 md:p-6">
-            {companies.length > 1 ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="w-full">
-                  <div className="flex items-center gap-3 hover:bg-slate-50 rounded-lg p-2 transition-colors cursor-pointer">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
-                      <Building2 className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-right">
-                      <h2 className="font-bold text-slate-800 text-base md:text-lg">{currentCompany?.name || 'בחר פלוגה'}</h2>
-                      <p className="text-xs text-slate-500">ניהול ציוד פלוגתי</p>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-64">
-                  {companies.map(company => (
-                    <DropdownMenuItem
-                      key={company.id}
-                      onClick={() => switchCompany(company)}
-                      className={currentCompany?.id === company.id ? 'bg-blue-50' : ''}
-                    >
-                      <Building2 className="w-4 h-4 ml-2" />
-                      {company.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
-                  <Building2 className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-bold text-slate-800 text-base md:text-lg">{currentCompany?.name || 'פלוגה'}</h2>
-                  <p className="text-xs text-slate-500">ניהול ציוד פלוגתי</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
+                <ClipboardList className="w-4 h-4 md:w-6 md:h-6 text-white" />
               </div>
-            )}
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-slate-800 text-base md:text-lg">פלוגה ב'</h2>
+                <p className="text-xs text-slate-500">ניהול ציוד פלוגתי</p>
+              </div>
+            </div>
           </SidebarHeader>
           <SidebarContent className="p-2 md:p-3">
              <SidebarGroup>
@@ -286,20 +229,12 @@ function LayoutContent({ children, currentPageName }) {
               <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200">
                 <Menu className="w-5 h-5 text-slate-600" />
               </SidebarTrigger>
-              <h1 className="text-lg md:text-xl font-bold text-slate-800">{currentCompany?.name || 'פלוגה'}</h1>
+              <h1 className="text-lg md:text-xl font-bold text-slate-800">פלוגה ב'</h1>
             </div>
           </header>
           <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
     </SidebarProvider>
-  );
-}
-
-export default function Layout({ children, currentPageName }) {
-  return (
-    <CompanyProvider>
-      <LayoutContent children={children} currentPageName={currentPageName} />
-    </CompanyProvider>
   );
 }

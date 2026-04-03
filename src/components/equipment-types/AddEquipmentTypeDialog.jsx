@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useCompany } from "@/components/CompanyContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Save, X } from "lucide-react";
 
 export default function AddEquipmentTypeDialog({ open, onOpenChange, onSave, editingType }) {
-  const { currentCompany } = useCompany();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -41,7 +39,6 @@ export default function AddEquipmentTypeDialog({ open, onOpenChange, onSave, edi
   const handleSubmit = (e) => {
     e.preventDefault();
     const dataToSave = {
-      company_id: currentCompany.id,
       ...formData,
       serial_number: parseInt(formData.serial_number) || 0
     };

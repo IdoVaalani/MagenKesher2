@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from "react";
-import { useCompany } from "@/components/CompanyContext";
 import { Soldier } from "@/entities/Soldier";
 import { Equipment } from "@/entities/Equipment";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ const retryOperation = async (operation, maxRetries = 3, delay = 1000) => {
 };
 
 export default function SoldiersPage() {
-  const { currentCompany } = useCompany();
   const [soldiers, setSoldiers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -35,21 +34,18 @@ export default function SoldiersPage() {
   const [soldierToDelete, setSoldierToDelete] = useState(null);
 
   useEffect(() => {
-    if (currentCompany) {
-      loadSoldiers();
-    }
-  }, [currentCompany]);
+    loadSoldiers();
+  }, []);
 
   const loadSoldiers = async () => {
-    if (!currentCompany) return;
-    
     setLoading(true);
     try {
-      const data = await retryOperation(() => Soldier.filter({ company_id: currentCompany.id }, "-created_date"));
+      const data = await retryOperation(() => Soldier.list("-created_date"));
+      // הוספת הגנה מפני נתונים לא תקינים
       setSoldiers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading soldiers after retries:", error);
-      setSoldiers([]);
+      setSoldiers([]); // ברירת מחדל בטוחה
       alert("שגיאה בטעינת רשימת החיילים. אנא נסה לרענן את הדף.");
     }
     setLoading(false);
@@ -92,11 +88,11 @@ export default function SoldiersPage() {
         const assignmentsToDelete = [];
         
         if (soldierToDelete.personal_id) {
-          const byId = await retryOperation(() => Equipment.filter({ company_id: currentCompany.id, soldier_id: soldierToDelete.personal_id }));
+          const byId = await retryOperation(() => Equipment.filter({ soldier_id: soldierToDelete.personal_id }));
           if (byId && Array.isArray(byId)) assignmentsToDelete.push(...byId);
         }
         
-        const byName = await retryOperation(() => Equipment.filter({ company_id: currentCompany.id, soldier_name: soldierToDelete.full_name }));
+        const byName = await retryOperation(() => Equipment.filter({ soldier_name: soldierToDelete.full_name }));
         if (byName && Array.isArray(byName)) assignmentsToDelete.push(...byName);
 
         const uniqueAssignments = Array.from(new Map(assignmentsToDelete.map(item => [item.id, item])).values());
@@ -143,7 +139,7 @@ export default function SoldiersPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
+    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>

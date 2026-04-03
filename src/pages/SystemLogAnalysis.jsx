@@ -4,7 +4,7 @@ import { DailySummaryLog } from '@/entities/DailySummaryLog';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Search, RefreshCw } from "lucide-react";
 
 export default function SystemLogAnalysis() {
   const [recentLogs, setRecentLogs] = useState([]);

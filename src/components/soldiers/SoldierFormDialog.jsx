@@ -1,13 +1,12 @@
+
 import React, { useState, useEffect } from "react";
-import { useCompany } from "@/components/CompanyContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"; // New import
 
 export default function SoldierFormDialog({ open, onOpenChange, onSave, editingSoldier }) {
-  const { currentCompany } = useCompany();
   const [fullName, setFullName] = useState("");
   const [personalId, setPersonalId] = useState("");
   const [email, setEmail] = useState("");
@@ -59,7 +58,6 @@ export default function SoldierFormDialog({ open, onOpenChange, onSave, editingS
     setError("");
 
     await onSave({
-      company_id: currentCompany.id,
       full_name: fullName,
       personal_id: personalId,
       email: email,

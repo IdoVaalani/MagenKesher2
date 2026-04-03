@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Calendar, BarChart3, CheckCircle, XCircle, CalendarRange, Search, PenTool, User, Eye, Trash2, History, RefreshCw, Package, Users, Award } from "lucide-react"; // Replaced Timeline with History, added RefreshCw, added Package, added Users, added Award
+import { Download, Calendar, BarChart3, CheckCircle, XCircle, CalendarRange, Search, PenTool, User, Eye, Trash2, CalendarDays, History, RefreshCw, Package, Users, Award } from "lucide-react"; // Replaced Timeline with History, added RefreshCw, added Package, added Users, added Award
 import { differenceInDays } from "date-fns";
 import EquipmentTrackingReport from "@/components/reports/EquipmentTrackingReport"; // New import for the moved component
 import EquipmentInventoryReport from "@/components/reports/EquipmentInventoryReport"; // New import for EquipmentInventoryReport

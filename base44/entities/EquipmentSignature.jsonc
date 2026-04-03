@@ -1,0 +1,73 @@
+{
+  "name": "EquipmentSignature",
+  "type": "object",
+  "properties": {
+    "soldier_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05d7\u05d9\u05d9\u05dc \u05e9\u05d7\u05ea\u05dd"
+    },
+    "soldier_id": {
+      "type": "string",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d0\u05d9\u05e9\u05d9 \u05e9\u05dc \u05d4\u05d7\u05d9\u05d9\u05dc"
+    },
+    "soldier_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05d4\u05d7\u05d9\u05d9\u05dc"
+    },
+    "equipment_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipment_name": {
+            "type": "string"
+          },
+          "serial_number": {
+            "type": "string"
+          },
+          "equipment_type_id": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "\u05e8\u05e9\u05d9\u05de\u05ea \u05e4\u05e8\u05d9\u05d8\u05d9 \u05d4\u05e6\u05d9\u05d5\u05d3 \u05e9\u05e0\u05d7\u05ea\u05de\u05d5"
+    },
+    "signature_data": {
+      "type": "string",
+      "description": "\u05e0\u05ea\u05d5\u05e0\u05d9 \u05d4\u05d7\u05ea\u05d9\u05de\u05d4 \u05d4\u05d3\u05d9\u05d2\u05d9\u05d8\u05dc\u05d9\u05ea (Base64)"
+    },
+    "signature_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d4\u05d7\u05ea\u05d9\u05de\u05d4"
+    },
+    "signature_time": {
+      "type": "string",
+      "format": "time",
+      "description": "\u05e9\u05e2\u05ea \u05d4\u05d7\u05ea\u05d9\u05de\u05d4"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea IP \u05e9\u05dc \u05d4\u05d7\u05d9\u05d9\u05dc \u05d1\u05d6\u05de\u05df \u05d4\u05d7\u05ea\u05d9\u05de\u05d4"
+    },
+    "device_info": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d3\u05e2 \u05e2\u05dc \u05d4\u05de\u05db\u05e9\u05d9\u05e8 (User Agent)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked"
+      ],
+      "default": "active",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05d7\u05ea\u05d9\u05de\u05d4"
+    }
+  },
+  "required": [
+    "soldier_name",
+    "equipment_items",
+    "signature_data",
+    "signature_date"
+  ]
+}

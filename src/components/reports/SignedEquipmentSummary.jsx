@@ -32,12 +32,8 @@ export default function SignedEquipmentSummary() {
       // יצירת מפה של מלאי
       const inventoryMap = new Map(allInventory.map(inv => [inv.equipment_type_name, inv.total_quantity]));
 
-      // יצירת מפה של סוגי ציוד - רק פעילים
-      const typesMap = new Map(
-        allEquipmentTypes
-          .filter(type => type.is_active !== false) // רק סוגי ציוד פעילים
-          .map(type => [type.id, type])
-      );
+      // יצירת מפה של סוגי ציוד
+      const typesMap = new Map(allEquipmentTypes.map(type => [type.id, type]));
 
       // ספירת כמויות לפי שם ציוד - עובר חייל חייל וסופר מה יש לו
       const quantitiesMap = new Map();
@@ -45,27 +41,24 @@ export default function SignedEquipmentSummary() {
       allAssignments.forEach(assignment => {
         const equipmentType = typesMap.get(assignment.equipment_type_id);
         
-        // אם סוג הציוד לא קיים או לא פעיל, דלג על השיוך הזה
-        if (!equipmentType || !equipmentType.name) {
-          return;
-        }
-        
-        const equipmentName = equipmentType.name.trim();
-        
-        if (quantitiesMap.has(equipmentName)) {
-          const existing = quantitiesMap.get(equipmentName);
-          quantitiesMap.set(equipmentName, {
-            ...existing,
-            count: existing.count + 1,
-            soldiers: existing.soldiers.add(assignment.soldier_name)
-          });
-        } else {
-          quantitiesMap.set(equipmentName, {
-            typeName: equipmentName,
-            count: 1,
-            soldiers: new Set([assignment.soldier_name]),
-            totalInventory: inventoryMap.get(equipmentName) || null
-          });
+        if (equipmentType && equipmentType.name) {
+          const equipmentName = equipmentType.name.trim();
+          
+          if (quantitiesMap.has(equipmentName)) {
+            const existing = quantitiesMap.get(equipmentName);
+            quantitiesMap.set(equipmentName, {
+              ...existing,
+              count: existing.count + 1,
+              soldiers: existing.soldiers.add(assignment.soldier_name)
+            });
+          } else {
+            quantitiesMap.set(equipmentName, {
+              typeName: equipmentName,
+              count: 1,
+              soldiers: new Set([assignment.soldier_name]),
+              totalInventory: inventoryMap.get(equipmentName) || null
+            });
+          }
         }
       });
 

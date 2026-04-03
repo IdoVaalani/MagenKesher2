@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { useCompany } from "@/components/CompanyContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,7 +17,6 @@ import { AppSettings } from "@/entities/AppSettings";
 import { sendEmailHandler } from "@/functions/sendEmailHandler";
 
 export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, equipmentTypes, assignments, onAssignSuccess }) {
-  const { currentCompany } = useCompany();
   const [selectedSoldierId, setSelectedSoldierId] = useState("");
   const [selectedEquipmentTypeIds, setSelectedEquipmentTypeIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,16 +43,6 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
   const safeSoldiers = Array.isArray(soldiers) ? soldiers : [];
   const safeEquipmentTypes = Array.isArray(equipmentTypes) ? equipmentTypes : [];
   const safeAssignments = Array.isArray(assignments) ? assignments : [];
-  
-  // הוספת אפשרות משקשייה
-  const storageOption = { 
-    id: 'STORAGE', 
-    full_name: '🏢 משקשייה (חדר נשק)', 
-    personal_id: '', 
-    email: '' 
-  };
-  
-  const allSoldierOptions = [storageOption, ...safeSoldiers];
 
   const availableEquipmentTypes = useMemo(() => {
     const assignedUniqueTypeIds = new Set(
@@ -85,7 +74,6 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
     expiresAt.setHours(expiresAt.getHours() + 48);
     
     await SoldierToken.create({
-      company_id: currentCompany.id,
       soldier_name: soldierName,
       soldier_email: soldierEmail,
       soldier_id: soldierId || '',
@@ -158,19 +146,16 @@ ${signatureUrl}
       return;
     }
 
-    const soldier = allSoldierOptions.find(s => s.id === selectedSoldierId);
+    const soldier = safeSoldiers.find(s => s.id === selectedSoldierId);
     if (!soldier) {
-      alert("שגיאה בבחירה");
+      alert("שגיאה בנתוני החייל");
       return;
     }
-    
-    const isStorage = soldier.id === 'STORAGE';
 
     setIsSaving(true);
     try {
       const creationPromises = selectedEquipmentTypeIds.map(typeId => {
         return Equipment.create({
-          company_id: currentCompany.id,
           soldier_name: soldier.full_name,
           soldier_id: soldier.personal_id || "",
           soldier_email: soldier.email || "",
@@ -184,11 +169,7 @@ ${signatureUrl}
       
       const equipmentToSign = selectedEquipmentTypes;
 
-      // משקשייה לא דורשת חתימה
-      if (isStorage) {
-        alert(`הציוד הועבר למשקשייה בהצלחה.`);
-        onAssignSuccess();
-      } else if (equipmentToSign.length > 0) {
+      if (equipmentToSign.length > 0) {
         if (signatureMethod === "email") {
           if (soldier.email) {
             await sendSignatureRequest(soldier, equipmentToSign);
@@ -219,7 +200,6 @@ ${signatureUrl}
     try {
       const { soldier, equipmentTypes } = createdEquipmentInfo;
       await EquipmentSignature.create({
-          company_id: currentCompany.id,
           soldier_name: soldier.full_name,
           soldier_id: soldier.personal_id || "",
           soldier_email: soldier.email || "",
@@ -266,9 +246,9 @@ ${signatureUrl}
                   <SelectValue placeholder="בחר חייל מהרשימה..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {allSoldierOptions.map(s => (
+                  {safeSoldiers.map(s => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.full_name} {s.id !== 'STORAGE' && s.email ? `(${s.email})` : s.id !== 'STORAGE' ? '(אין מייל)' : ''}
+                      {s.full_name} {s.email ? `(${s.email})` : '(אין מייל)'}
                     </SelectItem>
                   ))}
                 </SelectContent>

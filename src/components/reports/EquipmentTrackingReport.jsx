@@ -2,14 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// Input is no longer used for search, but might be used elsewhere or kept for future expansion. Not removed based on outline.
+import { Input } from "@/components/ui/input"; // Input is no longer used for search, but might be used elsewhere or kept for future expansion. Not removed based on outline.
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { History, Download, Package, ArrowRight, User, MapPin } from "lucide-react"; // Search icon is no longer used for the input.
+import { History, Search, Download, Package, ArrowRight, User, Calendar, MapPin } from "lucide-react"; // Search icon is no longer used for the input.
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
 import { EquipmentSignature } from "@/entities/EquipmentSignature";
+import { SystemLog } from "@/entities/SystemLog";
 
 export default function EquipmentTrackingReport() {
   const [equipmentTypes, setEquipmentTypes] = useState([]);

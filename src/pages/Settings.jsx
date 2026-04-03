@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from "react";
-import { useCompany } from "@/components/CompanyContext";
 import { AppSettings } from "@/entities/AppSettings";
 import { DailyConfirmation } from "@/entities/DailyConfirmation";
 import { Equipment } from "@/entities/Equipment";
-import { EquipmentType } from "@/entities/EquipmentType";
+import { EquipmentType } from "@/entities/EquipmentType"; // Fixed syntax error here
 import { SystemLog } from "@/entities/SystemLog";
 import { Soldier } from "@/entities/Soldier";
 import { EquipmentSignature } from "@/entities/EquipmentSignature";
@@ -22,7 +22,6 @@ import { Loader2, Save, FileText, Mail, Plus, Trash2, MessageSquare, Globe } fro
 import { User } from "@/entities/User";
 
 export default function Settings() {
-    const { currentCompany } = useCompany();
     const [settings, setSettings] = useState({
         single_confirmation_per_day: false,
         default_communication_method: 'email',
@@ -39,15 +38,13 @@ export default function Settings() {
 
     useEffect(() => {
         const loadInitialData = async () => {
-            if (!currentCompany) return;
-            
             setLoading(true);
             setError(null);
             try {
                 const userData = await User.me();
                 setUser(userData);
 
-                const settingsData = await AppSettings.filter({ company_id: currentCompany.id }, null, 1);
+                const settingsData = await AppSettings.list(null, 1);
                 let loadedSettings = {};
                 if (settingsData && settingsData.length > 0) {
                     loadedSettings = settingsData[0];
@@ -93,7 +90,7 @@ export default function Settings() {
         };
 
         loadInitialData();
-    }, [currentCompany]);
+    }, []);
 
     const handleRecipientChange = (index, field, value) => {
         setSettings(prevSettings => {
@@ -132,7 +129,6 @@ export default function Settings() {
 
         const validRecipients = settings.summary_recipients.filter(r => r.value && r.value.trim() !== '' && r.type !== 'whatsapp');
         const dataToSave = {
-            company_id: currentCompany.id,
             single_confirmation_per_day: settings.single_confirmation_per_day,
             manager_email: user.email,
             default_communication_method: settings.default_communication_method,
@@ -143,7 +139,7 @@ export default function Settings() {
         try {
             let existingSettings = null;
             try {
-                const currentSettings = await AppSettings.filter({ company_id: currentCompany.id }, null, 1);
+                const currentSettings = await AppSettings.list(null, 1);
                 if (currentSettings && currentSettings.length > 0) {
                     existingSettings = currentSettings[0];
                 }
@@ -156,7 +152,6 @@ export default function Settings() {
             if (existingSettings && existingSettings.id) {
                 await AppSettings.update(existingSettings.id, dataToSave);
                 await SystemLog.create({
-                    company_id: currentCompany.id,
                     message: `הגדרות עודכנו. נמענים לסיכום: ${recipientsLogString}`,
                     level: 'info',
                     category: 'data'
@@ -164,7 +159,6 @@ export default function Settings() {
             } else {
                 await AppSettings.create(dataToSave);
                 await SystemLog.create({
-                    company_id: currentCompany.id,
                     message: `הגדרות נוצרו. נמענים לסיכום: ${recipientsLogString}`,
                     level: 'info',
                     category: 'data'
@@ -179,7 +173,6 @@ export default function Settings() {
             setStatus(`שגיאה בשמירת ההגדרות: ${err.message}`);
             try {
                 await SystemLog.create({
-                    company_id: currentCompany.id,
                     message: `כשל בשמירת הגדרות: ${err.message}`,
                     level: 'error',
                     category: 'data'
@@ -514,9 +507,7 @@ ${equipmentReportUrl}` : ''}
         return <div className="text-red-500 p-4 text-center bg-gray-50 min-h-screen">{error}</div>;
     }
 
-    const isSystemAdmin = user?.role === 'admin';
-
-    if (!user) {
+    if (!user || user.role !== 'admin') {
         return (
             <div className="flex justify-center items-center h-screen bg-gray-50">
                 <p className="text-xl text-red-500">
@@ -598,7 +589,7 @@ ${equipmentReportUrl}` : ''}
                                     <SelectContent>
                                         <SelectItem value="email">מייל (מובנית)</SelectItem>
                                         <SelectItem value="gmail">מייל גוגל (פונקציה עצמאית)</SelectItem>
-                                        {isSystemAdmin && <SelectItem value="sms">SMS</SelectItem>}
+                                        <SelectItem value="sms">SMS</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <p className="text-sm text-slate-500">
@@ -657,7 +648,7 @@ ${equipmentReportUrl}` : ''}
                                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                                         >
                                             <option value="email">מייל</option>
-                                            {isSystemAdmin && <option value="sms">SMS</option>}
+                                            <option value="sms">SMS</option>
                                         </select>
                                     </div>
                                     <div className="col-span-4">
