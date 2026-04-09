@@ -66,17 +66,24 @@ export default function AddToSoldierDialog({
     if (!Array.isArray(equipmentTypes)) return [];
     const dataSource = allSystemAssignments !== null ? allSystemAssignments : (assignments || []);
 
-    // אסוף את כל ה-type IDs הייחודיים (עם מספר צ') שכבר משויכים לכל חייל במערכת
-    const assignedUniqueTypeIds = new Set(
+    // אסוף את כל מספרי הצ' הייחודיים שכבר משויכים לכל חייל במערכת
+    const assignedSerialNumbers = new Set(
       dataSource
         .map(a => {
           const type = equipmentTypes.find(t => t.id === a.equipment_type_id);
-          return (type && type.serial_number) ? type.id : null;
+          return (type && type.serial_number) ? type.serial_number : null;
         })
-        .filter(Boolean)
+        .filter(sn => sn !== null && sn !== 0)
     );
 
-    return equipmentTypes.filter(type => !assignedUniqueTypeIds.has(type.id));
+    return equipmentTypes.filter(type => {
+      // ציוד ייחודי (עם מספר צ') - חסום אם המספר כבר משויך
+      if (type.serial_number && type.serial_number !== 0) {
+        return !assignedSerialNumbers.has(type.serial_number);
+      }
+      // ציוד נלווה (בלי מספר צ') - תמיד זמין
+      return true;
+    });
   }, [equipmentTypes, assignments, allSystemAssignments]);
   
   const selectedEquipmentTypesList = useMemo(() => {

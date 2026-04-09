@@ -61,15 +61,20 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
 
   const availableEquipmentTypes = useMemo(() => {
     const dataSource = freshAssignments !== null ? freshAssignments : safeAssignments;
-    const assignedUniqueTypeIds = new Set(
+    const assignedSerialNumbers = new Set(
       dataSource
         .map(a => {
             const type = safeEquipmentTypes.find(t => t.id === a.equipment_type_id);
-            return (type && type.serial_number) ? type.id : null;
+            return (type && type.serial_number) ? type.serial_number : null;
         })
-        .filter(Boolean)
+        .filter(sn => sn !== null && sn !== 0)
     );
-    return safeEquipmentTypes.filter(type => !assignedUniqueTypeIds.has(type.id));
+    return safeEquipmentTypes.filter(type => {
+      if (type.serial_number && type.serial_number !== 0) {
+        return !assignedSerialNumbers.has(type.serial_number);
+      }
+      return true;
+    });
   }, [safeEquipmentTypes, safeAssignments, freshAssignments]);
   
   const filteredAvailableEquipmentTypes = useMemo(() => {
