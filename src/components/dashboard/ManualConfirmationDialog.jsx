@@ -83,6 +83,8 @@ export default function ManualConfirmationDialog({ open, onOpenChange, onConfirm
             soldier_id: "", 
             confirmation_date: today,
             equipment_ids: soldierEquipment.map(eq => eq.id),
+            total_equipment_count: soldierEquipment.length,
+            is_complete_confirmation: true,
             confirmation_time: now,
             device_info: "Manual confirmation by admin",
             report_details: "אישור ידני על ידי מנהל",
