@@ -36,6 +36,24 @@ async function sendEmailWithGmail(options) {
   await gmail.users.messages.send({ userId: "me", requestBody: { raw: encodedMessage } });
 }
 
+// --- SMS helper ---
+async function sendSmsDirectly(phoneNumber, message) {
+  const smsToken = Deno.env.get("CUSTOM_SMS_TOKEN");
+  if (!smsToken) throw new Error("SMS token not configured");
+  
+  let phone = phoneNumber.trim();
+  if (!phone.startsWith('+')) {
+    phone = phone.startsWith('0') ? '+972' + phone.substring(1) : '+972' + phone;
+  }
+
+  const smsUrl = `http://195.192.226.31:50987/send?token=${encodeURIComponent(smsToken)}&to=${phone}&message=${encodeURIComponent(message)}`;
+  const response = await fetch(smsUrl, { method: 'GET' });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`SMS API Error ${response.status}: ${text}`);
+  }
+}
+
 // --- Main handler ---
 Deno.serve(async (req) => {
   try {
@@ -156,11 +174,8 @@ Deno.serve(async (req) => {
           results.success++;
           console.log(`Email sent to ${recipient.value}`);
         } else if (recipient.type === 'sms') {
-          let phone = recipient.value.trim();
-          if (!phone.startsWith('+')) {
-            phone = phone.startsWith('0') ? '+972' + phone.substring(1) : '+972' + phone;
-          }
-          await base44.asServiceRole.functions.invoke('sendSms', { phoneNumber: phone, message: `כל ${totalSoldiersWithEquipment} החיילים אישרו את הציוד שלהם להיום ${dateFormatted}` });
+          const smsMessage = `כל ${totalSoldiersWithEquipment} החיילים אישרו את הציוד שלהם להיום ${dateFormatted}`;
+          await sendSmsDirectly(recipient.value, smsMessage);
           results.success++;
           console.log(`SMS sent to ${recipient.value}`);
         }
