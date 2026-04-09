@@ -11,9 +11,10 @@ import { Save, X, Plus } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Mail, PenTool } from "lucide-react";
 import DigitalSignatureDialog from "./DigitalSignatureDialog";
-import { EquipmentSignature } from "@/entities/EquipmentSignature"; // Import EquipmentSignature
-import { AppSettings } from "@/entities/AppSettings"; // New import
-import { sendEmailHandler } from "@/functions/sendEmailHandler"; // New import
+import { EquipmentSignature } from "@/entities/EquipmentSignature";
+import { AppSettings } from "@/entities/AppSettings";
+import { sendEmailHandler } from "@/functions/sendEmailHandler";
+import { LocationSelectField } from "./LocationSelect";
 
 export default function AddToSoldierDialog({ 
   open, 
@@ -26,7 +27,8 @@ export default function AddToSoldierDialog({
   onAssignSuccess 
 }) {
   const [selectedEquipmentTypeId, setSelectedEquipmentTypeId] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState("אצל החייל");
+  const [locationDetails, setLocationDetails] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [signatureMethod, setSignatureMethod] = useState("email");
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
