@@ -29,8 +29,9 @@ async function sendEmailWithGmail(options) {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
     
     const fromName = options.from_name || "מערכת ניהול ציוד";
+    const encodedFromName = `=?UTF-8?B?${toBase64(fromName)}?=`;
     const mailLines = [
-      `From: "${fromName}" <${Deno.env.get("GMAIL_ADDRESS")}>`,
+      `From: ${encodedFromName} <${Deno.env.get("GMAIL_ADDRESS")}>`,
       `To: ${options.to}`,
       "Content-type: text/html;charset=utf-8",
       "MIME-Version: 1.0",
