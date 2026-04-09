@@ -68,9 +68,19 @@ Deno.serve(async (req) => {
     const today = israelDate.toISOString().split('T')[0];
     console.log("Today (Israel):", today);
 
-    // Get all active equipment and find unique soldiers who need to confirm
+    // Get all active equipment requiring confirmation (same logic as automationTrigger)
     const allActiveEquipment = await base44.asServiceRole.entities.Equipment.filter({ status: 'active' });
-    const soldiersWithEquipment = [...new Set(allActiveEquipment.map(eq => eq.soldier_name).filter(Boolean))];
+    const equipmentRequiringConfirmation = allActiveEquipment.filter(eq => eq.requires_soldier_confirmation);
+    
+    // Count equipment per soldier
+    const equipmentCountBySoldier = {};
+    for (const eq of equipmentRequiringConfirmation) {
+      if (eq.soldier_name) {
+        equipmentCountBySoldier[eq.soldier_name] = (equipmentCountBySoldier[eq.soldier_name] || 0) + 1;
+      }
+    }
+    
+    const soldiersWithEquipment = Object.keys(equipmentCountBySoldier);
     console.log(`Total soldiers with active equipment: ${soldiersWithEquipment.length}`);
 
     if (soldiersWithEquipment.length === 0) {
@@ -78,20 +88,29 @@ Deno.serve(async (req) => {
       return Response.json({ sent: false, reason: "no_soldiers_with_equipment" });
     }
 
-    // Get today's COMPLETE confirmations
+    // Get today's confirmations and check by equipment count (same logic as automationTrigger)
     const todayConfirmations = await base44.asServiceRole.entities.DailyConfirmation.filter({ confirmation_date: today });
-    const completedSoldiers = [...new Set(
-      todayConfirmations
-        .filter(c => c.is_complete_confirmation === true)
-        .map(c => c.soldier_name)
-    )];
+    const todayConfirmationsMap = new Map(todayConfirmations.map(conf => [conf.soldier_name, conf]));
+    
+    const completedSoldiers = [];
+    const pending = [];
+    
+    for (const name of soldiersWithEquipment) {
+      const totalItems = equipmentCountBySoldier[name] || 0;
+      const confRecord = todayConfirmationsMap.get(name);
+      const confirmedItemsCount = confRecord?.equipment_ids?.length || 0;
+      
+      if (totalItems > 0 && confirmedItemsCount === totalItems) {
+        completedSoldiers.push(name);
+      } else {
+        pending.push(name);
+      }
+    }
+    
     console.log(`Completed confirmations today: ${completedSoldiers.length}/${soldiersWithEquipment.length}`);
 
     // Check if all confirmed
-    const allConfirmed = soldiersWithEquipment.every(name => completedSoldiers.includes(name));
-    
-    if (!allConfirmed) {
-      const pending = soldiersWithEquipment.filter(name => !completedSoldiers.includes(name));
+    if (pending.length > 0) {
       console.log(`Not all confirmed yet. Pending: ${pending.join(', ')}`);
       return Response.json({ sent: false, reason: "not_all_confirmed", pending });
     }
