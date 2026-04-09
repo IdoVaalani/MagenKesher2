@@ -46,18 +46,21 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
   const safeEquipmentTypes = Array.isArray(equipmentTypes) ? equipmentTypes : [];
   const safeAssignments = Array.isArray(assignments) ? assignments : [];
 
-  const [freshAssignments, setFreshAssignments] = useState([]);
+  const [freshAssignments, setFreshAssignments] = useState(null);
 
   useEffect(() => {
     if (open) {
-      Equipment.filter({ status: 'active' }).then(data => {
+      setFreshAssignments(null);
+      Equipment.list().then(data => {
         setFreshAssignments(Array.isArray(data) ? data : []);
-      }).catch(() => setFreshAssignments(safeAssignments));
+      }).catch(() => setFreshAssignments(null));
+    } else {
+      setFreshAssignments(null);
     }
   }, [open]);
 
   const availableEquipmentTypes = useMemo(() => {
-    const dataSource = freshAssignments.length > 0 ? freshAssignments : safeAssignments;
+    const dataSource = freshAssignments !== null ? freshAssignments : safeAssignments;
     const assignedUniqueTypeIds = new Set(
       dataSource
         .map(a => {

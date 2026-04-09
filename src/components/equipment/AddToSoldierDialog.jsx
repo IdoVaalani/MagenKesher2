@@ -48,20 +48,23 @@ export default function AddToSoldierDialog({
     }
   }, [open]);
 
-  const [allSystemAssignments, setAllSystemAssignments] = useState([]);
+  const [allSystemAssignments, setAllSystemAssignments] = useState(null);
 
   // טעינת כל השיוכים מהמערכת בפתיחת הדיאלוג כדי לוודא נתונים עדכניים
   useEffect(() => {
     if (open) {
-      Equipment.filter({ status: 'active' }).then(data => {
+      setAllSystemAssignments(null);
+      Equipment.list().then(data => {
         setAllSystemAssignments(Array.isArray(data) ? data : []);
-      }).catch(() => setAllSystemAssignments(assignments || []));
+      }).catch(() => setAllSystemAssignments(null));
+    } else {
+      setAllSystemAssignments(null);
     }
   }, [open]);
 
   const availableEquipmentTypes = useMemo(() => {
     if (!Array.isArray(equipmentTypes)) return [];
-    const dataSource = allSystemAssignments.length > 0 ? allSystemAssignments : (assignments || []);
+    const dataSource = allSystemAssignments !== null ? allSystemAssignments : (assignments || []);
 
     // אסוף את כל ה-type IDs הייחודיים (עם מספר צ') שכבר משויכים לכל חייל במערכת
     const assignedUniqueTypeIds = new Set(
