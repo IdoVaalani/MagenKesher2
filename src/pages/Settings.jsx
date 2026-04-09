@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSettings } from "@/entities/AppSettings";
 import { DailyConfirmation } from "@/entities/DailyConfirmation";
@@ -18,7 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, FileText, Mail, Plus, Trash2, MessageSquare, Globe } from "lucide-react";
+import { Loader2, Save, FileText, Mail, Plus, Trash2, MessageSquare, Globe, MapPin } from "lucide-react";
+import LocationsManager from "../components/settings/LocationsManager";
 import { User } from "@/entities/User";
 
 export default function Settings() {
@@ -28,6 +28,7 @@ export default function Settings() {
         summary_recipients: [{ type: 'email', value: '', name: '' }],
         app_url: '',
         manager_email: '',
+        equipment_locations: [],
     });
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -53,23 +54,21 @@ export default function Settings() {
                 setSettings(prevSettings => ({
                     ...prevSettings,
                     single_confirmation_per_day: loadedSettings.single_confirmation_per_day || false,
-                    // Ensure 'whatsapp' is not selected as a default method on load if it was previously saved
                     default_communication_method: loadedSettings.default_communication_method === 'whatsapp' ? 'email' : loadedSettings.default_communication_method || 'email',
                     app_url: loadedSettings.app_url || '',
                     manager_email: userData.email,
+                    equipment_locations: loadedSettings.equipment_locations || [],
 
                     summary_recipients: (() => {
                         if (loadedSettings.summary_recipients) {
                             if (Array.isArray(loadedSettings.summary_recipients) && loadedSettings.summary_recipients.length > 0) {
                                 const firstItem = loadedSettings.summary_recipients[0];
                                 if (typeof firstItem === 'string') {
-                                    // Convert old string array to new object format, filtering out invalid emails
                                     const convertedRecipients = loadedSettings.summary_recipients
                                         .filter(email => email && email.trim() !== '')
                                         .map(email => ({ type: 'email', value: email, name: '' }));
                                     return convertedRecipients.length > 0 ? convertedRecipients : [{ type: 'email', value: '', name: '' }];
                                 } else {
-                                    // Filter out 'whatsapp' type recipients if they exist from previous versions
                                     const filteredRecipients = loadedSettings.summary_recipients.filter(r => r.type !== 'whatsapp');
                                     return filteredRecipients.length > 0 ? filteredRecipients : [{ type: 'email', value: '', name: '' }];
                                 }
@@ -134,6 +133,7 @@ export default function Settings() {
             default_communication_method: settings.default_communication_method,
             summary_recipients: validRecipients,
             app_url: settings.app_url,
+            equipment_locations: settings.equipment_locations,
         };
 
         try {
@@ -628,6 +628,24 @@ ${equipmentReportUrl}` : ''}
                                     </Label>
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <MapPin className="w-5 h-5 text-blue-600" />
+                                מיקומי ציוד
+                            </CardTitle>
+                            <CardDescription>
+                                הגדר את רשימת המיקומים האפשריים לציוד. מיקומים אלו יופיעו בבחירת מיקום בעת שיוך ועדכון ציוד.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <LocationsManager
+                                locations={settings.equipment_locations}
+                                onChange={(newLocations) => setSettings(prev => ({ ...prev, equipment_locations: newLocations }))}
+                            />
                         </CardContent>
                     </Card>
 
