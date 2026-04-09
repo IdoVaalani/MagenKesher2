@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.5.0';
 import { google } from "npm:googleapis@134.0.0";
 
 // --- Gmail helpers (inlined from sendEmailHandler) ---

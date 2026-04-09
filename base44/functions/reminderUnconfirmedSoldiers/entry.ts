@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.5.0';
 
 // --- SMS helper ---
 async function sendSmsDirectly(phoneNumber, message) {
@@ -45,13 +45,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: "app_url not configured" }, { status: 400 });
     }
 
-    // Find soldiers with equipment
-    const soldiersWithEquipment = [...new Set(allActiveEquipment.map(eq => eq.soldier_name).filter(Boolean))];
+    // Find soldiers with equipment requiring confirmation (same logic as automationTrigger)
+    const equipmentRequiringConfirmation = allActiveEquipment.filter(eq => eq.requires_soldier_confirmation);
+    const equipmentCountBySoldier = {};
+    for (const eq of equipmentRequiringConfirmation) {
+      if (eq.soldier_name) {
+        equipmentCountBySoldier[eq.soldier_name] = (equipmentCountBySoldier[eq.soldier_name] || 0) + 1;
+      }
+    }
+    const soldiersWithEquipment = Object.keys(equipmentCountBySoldier);
     
-    // Find who already confirmed today (complete)
-    const confirmedSoldiers = new Set(
-      todayConfirmations.filter(c => c.is_complete_confirmation === true).map(c => c.soldier_name)
-    );
+    // Find who already fully confirmed today (by equipment count, same as automationTrigger)
+    const todayConfirmationsMap = new Map(todayConfirmations.map(conf => [conf.soldier_name, conf]));
+    const confirmedSoldiers = new Set();
+    for (const name of soldiersWithEquipment) {
+      const totalItems = equipmentCountBySoldier[name] || 0;
+      const confRecord = todayConfirmationsMap.get(name);
+      const confirmedItemsCount = confRecord?.equipment_ids?.length || 0;
+      if (totalItems > 0 && confirmedItemsCount === totalItems) {
+        confirmedSoldiers.add(name);
+      }
+    }
 
     // Find who hasn't confirmed
     const unconfirmedSoldiers = soldiersWithEquipment.filter(name => !confirmedSoldiers.has(name));
