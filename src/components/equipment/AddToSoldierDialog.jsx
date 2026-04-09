@@ -48,11 +48,24 @@ export default function AddToSoldierDialog({
     }
   }, [open]);
 
-  const availableEquipmentTypes = useMemo(() => {
-    if (!Array.isArray(equipmentTypes) || !Array.isArray(assignments)) return [];
+  const [allSystemAssignments, setAllSystemAssignments] = useState([]);
 
+  // טעינת כל השיוכים מהמערכת בפתיחת הדיאלוג כדי לוודא נתונים עדכניים
+  useEffect(() => {
+    if (open) {
+      Equipment.filter({ status: 'active' }).then(data => {
+        setAllSystemAssignments(Array.isArray(data) ? data : []);
+      }).catch(() => setAllSystemAssignments(assignments || []));
+    }
+  }, [open]);
+
+  const availableEquipmentTypes = useMemo(() => {
+    if (!Array.isArray(equipmentTypes)) return [];
+    const dataSource = allSystemAssignments.length > 0 ? allSystemAssignments : (assignments || []);
+
+    // אסוף את כל ה-type IDs הייחודיים (עם מספר צ') שכבר משויכים לכל חייל במערכת
     const assignedUniqueTypeIds = new Set(
-      assignments
+      dataSource
         .map(a => {
           const type = equipmentTypes.find(t => t.id === a.equipment_type_id);
           return (type && type.serial_number) ? type.id : null;
@@ -61,7 +74,7 @@ export default function AddToSoldierDialog({
     );
 
     return equipmentTypes.filter(type => !assignedUniqueTypeIds.has(type.id));
-  }, [equipmentTypes, assignments]);
+  }, [equipmentTypes, assignments, allSystemAssignments]);
   
   const selectedEquipmentTypesList = useMemo(() => {
     return equipmentTypes.filter(et => selectedTypeIds.has(et.id));

@@ -46,9 +46,20 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
   const safeEquipmentTypes = Array.isArray(equipmentTypes) ? equipmentTypes : [];
   const safeAssignments = Array.isArray(assignments) ? assignments : [];
 
+  const [freshAssignments, setFreshAssignments] = useState([]);
+
+  useEffect(() => {
+    if (open) {
+      Equipment.filter({ status: 'active' }).then(data => {
+        setFreshAssignments(Array.isArray(data) ? data : []);
+      }).catch(() => setFreshAssignments(safeAssignments));
+    }
+  }, [open]);
+
   const availableEquipmentTypes = useMemo(() => {
+    const dataSource = freshAssignments.length > 0 ? freshAssignments : safeAssignments;
     const assignedUniqueTypeIds = new Set(
-      safeAssignments
+      dataSource
         .map(a => {
             const type = safeEquipmentTypes.find(t => t.id === a.equipment_type_id);
             return (type && type.serial_number) ? type.id : null;
@@ -56,7 +67,7 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
         .filter(Boolean)
     );
     return safeEquipmentTypes.filter(type => !assignedUniqueTypeIds.has(type.id));
-  }, [safeEquipmentTypes, safeAssignments]);
+  }, [safeEquipmentTypes, safeAssignments, freshAssignments]);
   
   const filteredAvailableEquipmentTypes = useMemo(() => {
     if (!searchTerm) return availableEquipmentTypes;
