@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SystemLog } from '@/entities/SystemLog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,40 +61,65 @@ export default function SystemLogPage() {
                 <p className="text-slate-500">לא נמצאו רשומות לוג.</p>
               </div>
             ) : (
-              <div className="border rounded-lg overflow-auto max-h-[70vh]">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-slate-50">
-                    <TableRow>
-                      <TableHead className="w-[200px] text-right">זמן</TableHead>
-                      <TableHead className="w-[120px] text-right">רמה</TableHead>
-                      <TableHead className="w-[150px] text-right">קטגוריה</TableHead>
-                      <TableHead className="text-right">הודעה</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.map((log) => {
-                      const { icon, color } = getLevelAppearance(log.level);
-                      return (
-                        <TableRow key={log.id} className="hover:bg-slate-50/50">
-                          <TableCell className="text-sm text-slate-600 font-mono">
-                            {new Date(log.created_date).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={`capitalize ${color} flex items-center gap-1`}>
-                              {icon}
-                              {log.level}
-                            </Badge>
-                          </TableCell>
-                           <TableCell>
-                            <Badge variant="secondary" className="capitalize">{log.category}</Badge>
-                          </TableCell>
-                          <TableCell className="text-slate-800">{log.message}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <>
+                {/* Mobile card view */}
+                <div className="block md:hidden space-y-3 max-h-[70vh] overflow-y-auto">
+                  {logs.map((log) => {
+                    const { icon, color } = getLevelAppearance(log.level);
+                    return (
+                      <div key={log.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge variant="outline" className={`capitalize ${color} flex items-center gap-1`}>
+                            {icon}
+                            {log.level}
+                          </Badge>
+                          <Badge variant="secondary" className="capitalize text-xs">{log.category}</Badge>
+                        </div>
+                        <p className="text-sm text-slate-800 leading-relaxed">{log.message}</p>
+                        <p className="text-xs text-slate-400 font-mono">
+                          {new Date(log.created_date).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop table view */}
+                <div className="hidden md:block border rounded-lg overflow-auto max-h-[70vh]">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead className="w-[200px] text-right">זמן</TableHead>
+                        <TableHead className="w-[120px] text-right">רמה</TableHead>
+                        <TableHead className="w-[150px] text-right">קטגוריה</TableHead>
+                        <TableHead className="text-right">הודעה</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {logs.map((log) => {
+                        const { icon, color } = getLevelAppearance(log.level);
+                        return (
+                          <TableRow key={log.id} className="hover:bg-slate-50/50">
+                            <TableCell className="text-sm text-slate-600 font-mono">
+                              {new Date(log.created_date).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={`capitalize ${color} flex items-center gap-1`}>
+                                {icon}
+                                {log.level}
+                              </Badge>
+                            </TableCell>
+                             <TableCell>
+                              <Badge variant="secondary" className="capitalize">{log.category}</Badge>
+                            </TableCell>
+                            <TableCell className="text-slate-800">{log.message}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

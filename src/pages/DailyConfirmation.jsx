@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
@@ -514,7 +513,7 @@ export default function DailyConfirmation() {
 
   if (isTokenBased) {
     return (
-      <div style={{ direction: 'rtl' }} className="p-4 bg-gray-50 min-h-screen">
+      <div style={{ direction: 'rtl' }} className="p-3 sm:p-4 bg-gray-50 min-h-screen">
         <style>{`* { direction: rtl; }`}</style>
         {renderContent()}
       </div>
@@ -522,8 +521,8 @@ export default function DailyConfirmation() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">אישור ציוד יומי</h1>
+    <div className="p-3 sm:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4">אישור ציוד יומי</h1>
       {renderContent()}
     </div>
   );

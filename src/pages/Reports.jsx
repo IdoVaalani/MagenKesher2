@@ -508,34 +508,41 @@ export default function Reports() {
         </div>
 
         <Tabs defaultValue="confirmations" className="w-full">
-          <TabsList className="h-auto flex-wrap gap-1 mb-2">
-            <TabsTrigger value="confirmations" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              דוחות אישורים
+          <TabsList className="h-auto flex-wrap gap-1 mb-2 w-full justify-start">
+            <TabsTrigger value="confirmations" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">דוחות אישורים</span>
+              <span className="sm:hidden">אישורים</span>
             </TabsTrigger>
-            <TabsTrigger value="signatures" className="flex items-center gap-2">
-              <PenTool className="w-4 h-4" />
-              חתימות דיגיטליות
+            <TabsTrigger value="signatures" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <PenTool className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">חתימות דיגיטליות</span>
+              <span className="sm:hidden">חתימות</span>
             </TabsTrigger>
-            <TabsTrigger value="equipment" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              דוח ציוד
+            <TabsTrigger value="equipment" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">דוח ציוד</span>
+              <span className="sm:hidden">ציוד</span>
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              דוח ציודים
+            <TabsTrigger value="inventory" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">דוח ציודים</span>
+              <span className="sm:hidden">ציודים</span>
             </TabsTrigger>
-            <TabsTrigger value="tracking" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              מעקב מכשירים
+            <TabsTrigger value="tracking" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">מעקב מכשירים</span>
+              <span className="sm:hidden">מעקב</span>
             </TabsTrigger>
-            <TabsTrigger value="soldier-summary" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              סיכום לפי חייל
+            <TabsTrigger value="soldier-summary" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">סיכום לפי חייל</span>
+              <span className="sm:hidden">לפי חייל</span>
             </TabsTrigger>
-            <TabsTrigger value="signed-summary" className="flex items-center gap-2">
-              <Award className="w-4 h-4" />
-              ציוד חתום
+            <TabsTrigger value="signed-summary" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">ציוד חתום</span>
+              <span className="sm:hidden">חתום</span>
             </TabsTrigger>
           </TabsList>
 
@@ -656,8 +663,8 @@ export default function Reports() {
                   
                   return (
                     <Card key={dateStr} className="border-l-4 border-l-blue-500">
-                      <CardHeader className="bg-slate-50">
-                        <CardTitle className="flex items-center justify-between">
+                      <CardHeader className="bg-slate-50 px-3 sm:px-6">
+                        <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm sm:text-base">
                           <span>
                             {new Date(dateStr).toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' })} - {" "}
                             {new Date(dateStr).toLocaleDateString('he-IL', { weekday: 'long', timeZone: 'Asia/Jerusalem' })}
@@ -680,10 +687,10 @@ export default function Reports() {
                           {dayData.confirmedSoldiers.map(soldierName => {
                             const confirmation = dayData.confirmations.find(c => c.soldier_name === soldierName);
                             return (
-                              <div key={`${dateStr}-${soldierName}`} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                              <div key={`${dateStr}-${soldierName}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
                                 <div className="flex items-center gap-3">
-                                  <CheckCircle className="w-5 h-5 text-green-600" />
-                                  <div>
+                                  <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+                                  <div className="min-w-0">
                                     <p className="font-semibold text-green-800">{soldierName}</p>
                                     <p className="text-sm text-green-600">
                                       אושר בשעה: {confirmation?.confirmation_time || 'לא זמין'}
@@ -699,7 +706,7 @@ export default function Reports() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 mr-8 sm:mr-0">
                                   <Badge className="bg-green-100 text-green-800">אושר</Badge>
                                   {confirmation?.report_details && (
                                     <Badge variant="outline" className="bg-yellow-50 text-yellow-800">
@@ -981,7 +988,7 @@ export default function Reports() {
           </TabsContent>
 
           <TabsContent value="equipment" className="space-y-6">
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end mb-4 sm:mb-6">
               <Button 
                 onClick={exportEquipmentReport}
                 disabled={equipmentData.length === 0 || equipmentLoading}
@@ -1034,7 +1041,7 @@ export default function Reports() {
 
             {/* Equipment Statistics */}
             {equipmentData.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
                 <Card className="bg-purple-50 border-purple-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">

@@ -15,9 +15,9 @@ export default function StatsCards({ title, value, icon: Icon, bgColor, trend, i
           <Icon className={`w-4 h-4 text-white ${isIconSpinning ? 'animate-spin' : ''}`} />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-slate-800">{value}</div>
-        <p className="text-xs text-slate-500 mt-1">
+      <CardContent className="pt-0 sm:pt-0">
+        <div className="text-xl sm:text-2xl font-bold text-slate-800">{value}</div>
+        <p className="text-[10px] sm:text-xs text-slate-500 mt-1 line-clamp-1">
           {trend}
         </p>
       </CardContent>

@@ -658,8 +658,8 @@ ${equipmentReportUrl}` : ''}
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {settings.summary_recipients.map((recipient, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                                    <div className="col-span-3">
+                                <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                                    <div className="w-full sm:w-28">
                                         <select
                                             value={recipient.type}
                                             onChange={(e) => handleRecipientChange(index, 'type', e.target.value)}
@@ -669,7 +669,7 @@ ${equipmentReportUrl}` : ''}
                                             <option value="sms">SMS</option>
                                         </select>
                                     </div>
-                                    <div className="col-span-4">
+                                    <div className="flex-1">
                                         <Input
                                             type={recipient.type === 'email' ? 'email' : 'tel'}
                                             value={recipient.value}
@@ -682,7 +682,7 @@ ${equipmentReportUrl}` : ''}
                                             className="w-full"
                                         />
                                     </div>
-                                    <div className="col-span-4">
+                                    <div className="flex-1">
                                         <Input
                                             type="text"
                                             value={recipient.name}
@@ -691,7 +691,7 @@ ${equipmentReportUrl}` : ''}
                                             className="w-full"
                                         />
                                     </div>
-                                    <div className="col-span-1">
+                                    <div className="flex justify-end">
                                         <Button
                                             variant="ghost"
                                             size="icon"

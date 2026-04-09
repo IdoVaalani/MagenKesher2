@@ -229,7 +229,7 @@ const DetailsDialog = ({ open, onOpenChange, dialogData, dialogType }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] h-[600px] flex flex-col">
+      <DialogContent className="max-w-[95vw] sm:max-w-[700px] h-[80vh] sm:h-[600px] flex flex-col">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
           <DialogDescription>
@@ -902,7 +902,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-8">
           <StatsCards
             title="סה״כ חיילים"
             value={stats.totalSoldiers}
