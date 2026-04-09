@@ -21,17 +21,25 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
 
+  // Check if current URL has a token parameter (for token-based access like DailyConfirmation)
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasToken = !!urlParams.get('token');
+  const isDailyConfirmationWithToken = window.location.pathname.includes('DailyConfirmation') && hasToken;
+
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
+    // Skip loading wait for token-based access
+    if (!isDailyConfirmationWithToken) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+        </div>
+      );
+    }
   }
 
   // Handle authentication errors
-  if (authError) {
+  if (authError && !isDailyConfirmationWithToken) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
