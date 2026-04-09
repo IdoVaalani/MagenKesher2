@@ -1,5 +1,12 @@
 import { google } from "npm:googleapis@134.0.0";
-import { Base64 } from "https://deno.land/x/bb64/mod.ts";
+
+function toBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+function toBase64Url(str) {
+  return toBase64(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 // --- פונקציית עזר לשליחת מייל - משולבת ישירות בקובץ ---
 async function sendEmailWithGmail(options) {
@@ -25,19 +32,15 @@ async function sendEmailWithGmail(options) {
     const mailLines = [
       `From: "${fromName}" <${Deno.env.get("GMAIL_ADDRESS")}>`,
       `To: ${options.to}`,
-      "Content-type: text/html;charset=utf-8", // Changed to utf-8 for better hebrew support
+      "Content-type: text/html;charset=utf-8",
       "MIME-Version: 1.0",
-      `Subject: =?UTF-8?B?${Base64.encode(options.subject)}?=`, // Encode subject for hebrew
+      `Subject: =?UTF-8?B?${toBase64(options.subject)}?=`,
       "",
       options.body,
     ];
     const rawMessage = mailLines.join("\r\n");
 
-    const encodedMessage = Base64.from(rawMessage)
-      .toString("base64")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+    const encodedMessage = toBase64Url(rawMessage);
 
 
     const { data } = await gmail.users.messages.send({
