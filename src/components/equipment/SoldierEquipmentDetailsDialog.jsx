@@ -129,7 +129,7 @@ export default function SoldierEquipmentDetailsDialog({
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{type?.name || 'לא ידוע'}</TableCell>
                           <TableCell>{type?.serial_number || '-'}</TableCell>
-                          <TableCell><Badge variant="outline">{item.status}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={item.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : item.status === 'maintenance' ? 'bg-amber-50 text-amber-700 border-amber-200' : item.status === 'lost' ? 'bg-red-50 text-red-700 border-red-200' : item.status === 'damaged' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-50 text-slate-700 border-slate-200'}>{item.status === 'active' ? 'תקין' : item.status === 'maintenance' ? 'בתחזוקה' : item.status === 'lost' ? 'אבד' : item.status === 'damaged' ? 'פגום' : 'תקין'}</Badge></TableCell>
                           <TableCell>
                             <button
                               type="button"
