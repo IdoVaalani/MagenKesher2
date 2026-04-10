@@ -236,7 +236,10 @@ Deno.serve(async (req) => {
           results.success++;
           console.log(`Email sent to ${recipient.value}`);
         } else if (recipient.type === 'sms') {
-          const smsMessage = `כל ${totalSoldiersWithEquipment} החיילים אישרו את הציוד שלהם להיום ${dateFormatted}`;
+          let smsMessage = `כל ${totalSoldiersWithEquipment} החיילים אישרו את הציוד שלהם להיום ${dateFormatted}`;
+          if (reportUrl) {
+            smsMessage += `\nדוח מפורט: ${reportUrl}`;
+          }
           await sendSmsDirectly(recipient.value, smsMessage);
           results.success++;
           console.log(`SMS sent to ${recipient.value}`);
