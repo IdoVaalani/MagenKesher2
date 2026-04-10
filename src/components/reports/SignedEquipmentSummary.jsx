@@ -118,7 +118,7 @@ export default function SignedEquipmentSummary() {
       case 'excess':
         return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">⚡ עודף {signed - inventory}</Badge>;
       case 'no_inventory':
-        return <Badge variant="outline" className="text-slate-500">לא הוגדר</Badge>;
+        return <Badge variant="outline" className="text-slate-500">מלאי לא הוזן</Badge>;
       default:
         return null;
     }
@@ -196,7 +196,7 @@ export default function SignedEquipmentSummary() {
     const exportData = equipmentSummary.map(item => ({
       'סוג ציוד': item.typeName,
       'משויכים': item.count,
-      'מלאי כולל': item.totalInventory || 'לא מוגדר',
+      'מלאי כולל': item.totalInventory || 0,
       'הפרש': item.totalInventory ? (item.count - item.totalInventory) : '-',
       'סטטוס': item.totalInventory 
         ? (item.count === item.totalInventory ? 'הכל משויך' : item.count > item.totalInventory ? 'עודף' : 'חסרים')
@@ -429,12 +429,10 @@ export default function SignedEquipmentSummary() {
                               className="w-24 text-center"
                               placeholder="0"
                             />
-                          ) : currentInventory ? (
-                            <Badge variant="outline" className="text-slate-700 text-base px-3 py-1">
-                              {currentInventory}
-                            </Badge>
                           ) : (
-                            <span className="text-slate-400 text-sm">לא מוגדר</span>
+                            <Badge variant="outline" className="text-slate-700 text-base px-3 py-1">
+                              {currentInventory || 0}
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell>
