@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Package, X, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Package, X, Loader2, ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from '@/api/base44Client';
 import AddToSoldierDialog from './AddToSoldierDialog';
 
@@ -17,6 +18,27 @@ export default function SoldierEquipmentDetailsDialog({
 }) {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const statusMap = {
+    active: { label: 'תקין', color: 'bg-green-50 text-green-700 border-green-200' },
+    maintenance: { label: 'בתחזוקה', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+    lost: { label: 'אבד', color: 'bg-red-50 text-red-700 border-red-200' },
+    damaged: { label: 'פגום', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  };
+
+  const handleStatusChange = async (assignmentId, newStatus) => {
+    setUpdatingStatusId(assignmentId);
+    try {
+      await base44.entities.Equipment.update(assignmentId, { status: newStatus });
+      onRefreshData();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('שגיאה בעדכון הסטטוס');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
 
   const typesMap = useMemo(() => {
     return new Map((allEquipmentTypes || []).map(type => [type.id, type]));
@@ -129,7 +151,22 @@ export default function SoldierEquipmentDetailsDialog({
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{type?.name || 'לא ידוע'}</TableCell>
                           <TableCell>{type?.serial_number || '-'}</TableCell>
-                          <TableCell><Badge variant="outline" className={item.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : item.status === 'maintenance' ? 'bg-amber-50 text-amber-700 border-amber-200' : item.status === 'lost' ? 'bg-red-50 text-red-700 border-red-200' : item.status === 'damaged' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-50 text-slate-700 border-slate-200'}>{item.status === 'active' ? 'תקין' : item.status === 'maintenance' ? 'בתחזוקה' : item.status === 'lost' ? 'אבד' : item.status === 'damaged' ? 'פגום' : 'תקין'}</Badge></TableCell>
+                          <TableCell>
+                            <Select
+                              value={item.status || 'active'}
+                              onValueChange={(val) => handleStatusChange(item.id, val)}
+                              disabled={updatingStatusId === item.id}
+                            >
+                              <SelectTrigger className={`w-[120px] h-8 text-xs border ${statusMap[item.status || 'active']?.color || 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                                <SelectValue>{statusMap[item.status || 'active']?.label || 'תקין'}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(statusMap).map(([key, { label }]) => (
+                                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
                           <TableCell>
                             <button
                               type="button"
