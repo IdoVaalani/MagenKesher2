@@ -149,10 +149,11 @@ Deno.serve(async (req) => {
       const soldierEquipment = equipmentRequiringConfirmation.filter(eq => eq.soldier_name === soldierName);
       for (const eq of soldierEquipment) {
         const eqType = typesMap.get(eq.equipment_type_id);
+        if (!eqType?.serial_number || eqType.serial_number <= 0) continue;
         const row = [
           soldierName,
           eqType?.name || 'לא ידוע',
-          eqType?.serial_number ? `'${eqType.serial_number}` : 'אין',
+          `'${eqType.serial_number}`,
           eq.location || '',
           eq.last_confirmation_date ? new Date(eq.last_confirmation_date).toLocaleDateString('he-IL') : ''
         ].map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',');
