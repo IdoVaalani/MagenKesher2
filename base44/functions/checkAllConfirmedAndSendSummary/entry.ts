@@ -138,6 +138,41 @@ Deno.serve(async (req) => {
       return Response.json({ sent: false, reason: "no_recipients" });
     }
 
+    // Build CSV with soldier + equipment details
+    const allEquipmentTypes = await base44.asServiceRole.entities.EquipmentType.list();
+    const typesMap = new Map(allEquipmentTypes.map(t => [t.id, t]));
+
+    const csvHeaders = ['שם חייל', 'שם ציוד', 'מספר צ\'', 'מיקום', 'תאריך אישור אחרון'];
+    const csvRows = [csvHeaders.join(',')];
+    
+    for (const soldierName of completedSoldiers) {
+      const soldierEquipment = equipmentRequiringConfirmation.filter(eq => eq.soldier_name === soldierName);
+      for (const eq of soldierEquipment) {
+        const eqType = typesMap.get(eq.equipment_type_id);
+        const row = [
+          soldierName,
+          eqType?.name || 'לא ידוע',
+          eqType?.serial_number ? `'${eqType.serial_number}` : 'אין',
+          eq.location || '',
+          eq.last_confirmation_date ? new Date(eq.last_confirmation_date).toLocaleDateString('he-IL') : ''
+        ].map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',');
+        csvRows.push(row);
+      }
+    }
+
+    let reportUrl = null;
+    try {
+      const csvContent = '\ufeff' + csvRows.join('\n');
+      const csvBytes = new TextEncoder().encode(csvContent);
+      const today2 = israelDate.toISOString().split('T')[0];
+      const csvFile = new File([csvBytes], `סיכום_ציוד_${today2}.csv`, { type: 'text/csv;charset=utf-8;' });
+      const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file: csvFile });
+      reportUrl = file_url;
+      console.log('CSV uploaded:', reportUrl);
+    } catch (csvErr) {
+      console.error('Failed to generate CSV:', csvErr.message);
+    }
+
     // Build summary email
     const confirmedSoldierNames = completedSoldiers;
     const totalActiveEquipmentItems = allActiveEquipment.length;
@@ -164,6 +199,13 @@ Deno.serve(async (req) => {
           <h4 style="margin-top: 0; color: #555;">✅ חיילים שאישרו:</h4>
           <p style="margin: 5px 0;">${confirmedSoldierNames.map(name => `• ${name}`).join('<br>')}</p>
         </div>
+        ${reportUrl ? `
+        <div style="background-color: #fff8e6; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffe0a0;">
+          <h4 style="margin-top: 0; color: #996600;">📋 דוח ציוד מפורט:</h4>
+          <p>הדוח כולל פירוט של כל חייל, הציוד שאישר, מספרי צ' ומיקומים.</p>
+          <a href="${reportUrl}" style="background-color: #28a745; color: white; padding: 12px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 5px; font-weight: bold; margin-top: 10px;">הורד דוח ציוד מפורט</a>
+        </div>
+        ` : ''}
         <p style="margin-top: 30px;">בברכה,<br>מערכת ניהול ציוד</p>
       </div>
     `;
@@ -204,20 +246,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Log the summary
-    await base44.asServiceRole.entities.DailySummaryLog.create({
-      summary_date: today,
-      sent_at: new Date().toISOString(),
-    });
-
-    await base44.asServiceRole.entities.SystemLog.create({
-      message: `סיכום יומי אוטומטי נשלח - כל ${totalSoldiersWithEquipment} החיילים אישרו. נשלח ל-${results.success} נמענים.`,
-      level: 'info',
-      category: 'communication'
-    });
-
     console.log(`Summary sent: ${results.success} success, ${results.failed} failed`);
-    return Response.json({ sent: true, results });
+    return Response.json({ sent: true, results, reportUrl });
 
   } catch (error) {
     console.error("Error in checkAllConfirmedAndSendSummary:", error.message);
