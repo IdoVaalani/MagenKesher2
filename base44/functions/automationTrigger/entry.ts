@@ -1,4 +1,3 @@
-
 // Forcing a clean redeployment to resolve potential routing issues.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.5.0';
 
@@ -417,10 +416,16 @@ Deno.serve(async (_req) => {
     }
     
     if (timeSlot === 'summary_time') {
+        const existingSummaries = await base44.asServiceRole.entities.DailySummaryLog.filter({ summary_date: today });
+        if (existingSummaries && existingSummaries.length > 0) {
+            return Response.json({ success: true, message: "Summary already sent today." });
+        }
+        const { success, failed, equipmentReportUrl } = await sendDailySummary(base44, appSettings);
         return Response.json({ 
             success: true, 
-            message: `Summary time but ${pendingSoldiers.length} soldiers still pending. No summary will be sent.`,
-            pending_soldiers: pendingSoldiers
+            message: `Daily summary sent to ${success} recipients (failed: ${failed}). Pending soldiers: ${pendingSoldiers.length}.`,
+            pending_soldiers: pendingSoldiers,
+            reportUrl: equipmentReportUrl
         });
     }
 
