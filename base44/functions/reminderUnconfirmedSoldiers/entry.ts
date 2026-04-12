@@ -18,6 +18,34 @@ async function sendSmsDirectly(phoneNumber, message) {
   }
 }
 
+// --- Email helper (via sendEmailHandler function) ---
+async function sendEmailViaHandler(to, subject, body, fromName = 'מערכת ניהול ציוד') {
+  const functionUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://base44.app'}/api/apps/${Deno.env.get('BASE44_APP_ID')}/functions/sendEmailHandler`;
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get('automationTrigger')}`
+    },
+    body: JSON.stringify({ to, subject, body, from_name: fromName })
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Email function error ${response.status}: ${errorText}`);
+  }
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(`Email sending failed: ${result.error || 'Unknown error'}`);
+  }
+}
+
+function resolveCommMethod(soldierData, systemDefault) {
+  if (soldierData?.preferred_communication_method && soldierData.preferred_communication_method !== 'default') {
+    return soldierData.preferred_communication_method;
+  }
+  return systemDefault;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -39,13 +67,14 @@ Deno.serve(async (req) => {
 
     const settings = settingsList?.[0] || {};
     const appUrl = settings.app_url || '';
+    const defaultCommMethod = settings.default_communication_method || 'gmail';
 
     if (!appUrl) {
       console.error("No app_url configured in settings!");
       return Response.json({ error: "app_url not configured" }, { status: 400 });
     }
 
-    // Find soldiers with equipment requiring confirmation (same logic as automationTrigger)
+    // Find soldiers with equipment requiring confirmation
     const equipmentRequiringConfirmation = allActiveEquipment.filter(eq => eq.requires_soldier_confirmation);
     const equipmentCountBySoldier = {};
     for (const eq of equipmentRequiringConfirmation) {
@@ -55,7 +84,7 @@ Deno.serve(async (req) => {
     }
     const soldiersWithEquipment = Object.keys(equipmentCountBySoldier);
     
-    // Find who already fully confirmed today (by equipment count, same as automationTrigger)
+    // Find who already fully confirmed today
     const todayConfirmationsMap = new Map(todayConfirmations.map(conf => [conf.soldier_name, conf]));
     const confirmedSoldiers = new Set();
     for (const name of soldiersWithEquipment) {
@@ -67,7 +96,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Find who hasn't confirmed
     const unconfirmedSoldiers = soldiersWithEquipment.filter(name => !confirmedSoldiers.has(name));
 
     console.log(`📊 ${confirmedSoldiers.size}/${soldiersWithEquipment.length} confirmed. ${unconfirmedSoldiers.length} pending.`);
@@ -78,17 +106,11 @@ Deno.serve(async (req) => {
     }
 
     const soldierDataMap = new Map(allSoldiers.map(s => [s.full_name, s]));
-    const results = { sent: 0, noPhone: 0, error: 0 };
+    const results = { emailSent: 0, smsSent: 0, unreachable: 0, error: 0 };
 
     for (const soldierName of unconfirmedSoldiers) {
       const soldierInfo = soldierDataMap.get(soldierName);
-      const soldierPhone = soldierInfo?.phone_number;
-
-      if (!soldierPhone) {
-        results.noPhone++;
-        console.log(`⚠️ ${soldierName}: no phone number, cannot send SMS reminder.`);
-        continue;
-      }
+      const commMethod = resolveCommMethod(soldierInfo, defaultCommMethod);
 
       try {
         // Find existing valid token or create new one
@@ -104,7 +126,6 @@ Deno.serve(async (req) => {
         if (validToken) {
           tokenValue = validToken.token;
         } else {
-          // Create new token
           tokenValue = Math.random().toString(36).substring(2) + Date.now().toString(36);
           const expiresAt = new Date();
           expiresAt.setHours(expiresAt.getHours() + 48);
@@ -120,11 +141,32 @@ Deno.serve(async (req) => {
         }
 
         const confirmationUrl = `${appUrl}/DailyConfirmation?token=${tokenValue}`;
-        const smsBody = `⚠️ תזכורת: ${soldierName}, טרם אישרת את הציוד שלך להיום (${formattedDate}). לחץ לאישור: ${confirmationUrl}`;
 
-        await sendSmsDirectly(soldierPhone, smsBody);
-        results.sent++;
-        console.log(`📱 SMS reminder sent to ${soldierName}`);
+        if ((commMethod === 'email' || commMethod === 'gmail') && soldierInfo?.email) {
+          const emailBody = `
+            <div dir="rtl" style="font-family: Arial, sans-serif; text-align: right; color: #333;">
+              <h3>⚠️ תזכורת אישור ציוד</h3>
+              <p>שלום ${soldierName},</p>
+              <p>טרם אישרת את הציוד שלך להיום (${formattedDate}).</p>
+              <p>אנא לחץ על הכפתור הבא לאישור:</p>
+              <a href="${confirmationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-align: center; text-decoration: none; display: inline-block; border-radius: 6px; font-weight: bold; margin: 15px 0;">אישור ציוד</a>
+              <p style="color: #666; font-size: 12px;">הקישור תקף ל-48 שעות. לא נדרשת התחברות.</p>
+              <p>בברכה,<br>מערכת ניהול ציוד</p>
+            </div>
+          `;
+          await sendEmailViaHandler(soldierInfo.email, `⚠️ תזכורת: אישור ציוד יומי - ${formattedDate}`, emailBody);
+          results.emailSent++;
+          console.log(`📧 Email reminder sent to ${soldierName} (${soldierInfo.email})`);
+        } else if (commMethod === 'sms' && soldierInfo?.phone_number) {
+          const smsBody = `⚠️ תזכורת: ${soldierName}, טרם אישרת את הציוד שלך להיום (${formattedDate}). לחץ לאישור: ${confirmationUrl}`;
+          await sendSmsDirectly(soldierInfo.phone_number, smsBody);
+          results.smsSent++;
+          console.log(`📱 SMS reminder sent to ${soldierName}`);
+        } else {
+          results.unreachable++;
+          console.log(`⚠️ ${soldierName}: no valid contact for method '${commMethod}'`);
+          continue;
+        }
 
         await base44.asServiceRole.entities.ReminderLog.create({
           soldier_name: soldierName,
@@ -135,7 +177,7 @@ Deno.serve(async (req) => {
 
       } catch (err) {
         results.error++;
-        console.error(`❌ SMS reminder failed for ${soldierName}:`, err.message);
+        console.error(`❌ Reminder failed for ${soldierName}:`, err.message);
         await base44.asServiceRole.entities.ReminderLog.create({
           soldier_name: soldierName,
           reminder_date: today,
@@ -148,8 +190,9 @@ Deno.serve(async (req) => {
       await new Promise(r => setTimeout(r, 300));
     }
 
+    const totalSent = results.emailSent + results.smsSent;
     await base44.asServiceRole.entities.SystemLog.create({
-      message: `תזכורות SMS נשלחו ל-${results.sent} חיילים שטרם אישרו (${results.noPhone} ללא טלפון, ${results.error} שגיאות).`,
+      message: `תזכורות נשלחו ל-${totalSent} חיילים (${results.emailSent} מיילים, ${results.smsSent} SMS, ${results.unreachable} ללא פרטי קשר, ${results.error} שגיאות).`,
       level: 'info',
       category: 'communication',
     });
