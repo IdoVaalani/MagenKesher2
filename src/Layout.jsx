@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User } from "@/entities/User";
-import { Soldier } from "@/entities/Soldier";
+import { useAuth } from "@/lib/AuthContext";
+import { base44 } from "@/api/base44Client";
 import { ClipboardList, Package, CheckSquare, BarChart3, Wrench, Menu, Users, Settings, Server, X } from "lucide-react";
 
 const navigationItems = [
@@ -19,11 +19,11 @@ const navigationItems = [
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [soldiers, setSoldiers] = useState(null);
+  const [layoutReady, setLayoutReady] = useState(false);
 
   const urlParams = new URLSearchParams(location.search);
   const hasToken = !!urlParams.get('token');
@@ -33,31 +33,28 @@ export default function Layout({ children, currentPageName }) {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  // Load soldiers list once user is available
   useEffect(() => {
     if (hasToken) {
-      setIsLoading(false);
+      setLayoutReady(true);
       return;
     }
-    const loadInitialData = async () => {
+    if (!user) return;
+    const loadSoldiers = async () => {
       try {
-        const userData = await User.me();
-        setUser(userData);
-        try {
-          const soldiersList = await Soldier.list();
-          setSoldiers(soldiersList);
-        } catch (e) {
-          console.warn('Could not load soldiers list:', e.message);
-          setSoldiers([]);
-        }
-      } catch (error) {
-        User.login();
+        const soldiersList = await base44.entities.Soldier.list();
+        setSoldiers(soldiersList);
+      } catch (e) {
+        console.warn('Could not load soldiers list:', e.message);
+        setSoldiers([]);
       } finally {
-        setIsLoading(false);
+        setLayoutReady(true);
       }
     };
-    loadInitialData();
-  }, [location.search, hasToken]);
+    loadSoldiers();
+  }, [user, hasToken]);
 
+  // Redirect non-admin users to DailyConfirmation
   useEffect(() => {
     if (!hasToken && user && soldiers) {
       if (user.role === 'admin') return;
@@ -70,6 +67,7 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [user, soldiers, location.pathname, navigate, hasToken]);
 
+  // Determine admin status
   useEffect(() => {
     if (!user) { setIsAdmin(false); return; }
     if (user.role === 'admin') { setIsAdmin(true); return; }
@@ -96,7 +94,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  if (isLoading || !user) {
+  if (!layoutReady || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center p-6">
