@@ -23,6 +23,7 @@ export default function Layout({ children, currentPageName }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [soldiers, setSoldiers] = useState(null);
 
   const urlParams = new URLSearchParams(location.search);
   const hasToken = !!urlParams.get('token');
@@ -37,56 +38,45 @@ export default function Layout({ children, currentPageName }) {
       setIsLoading(false);
       return;
     }
-    const checkUser = async () => {
+    const loadInitialData = async () => {
       try {
-        const userData = await User.me();
+        const [userData, soldiersList] = await Promise.all([
+          User.me(),
+          Soldier.list()
+        ]);
         setUser(userData);
+        setSoldiers(soldiersList);
       } catch (error) {
         User.login();
       } finally {
         setIsLoading(false);
       }
     };
-    checkUser();
+    loadInitialData();
   }, [location.search, hasToken]);
 
   useEffect(() => {
-    if (!hasToken && user) {
-      const checkUserRoleAndNavigate = async () => {
-        try {
-          if (user.role === 'admin') return;
-          const soldiers = await Soldier.list();
-          const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
-          if (soldierRecord && soldierRecord.role === 'admin') return;
-          const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
-          if (location.pathname !== dailyConfirmationUrl) {
-            navigate(dailyConfirmationUrl, { replace: true });
-          }
-        } catch (error) {
-          const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
-          if (location.pathname !== dailyConfirmationUrl) {
-            navigate(dailyConfirmationUrl, { replace: true });
-          }
-        }
-      };
-      checkUserRoleAndNavigate();
+    if (!hasToken && user && soldiers) {
+      if (user.role === 'admin') return;
+      const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
+      if (soldierRecord && soldierRecord.role === 'admin') return;
+      const dailyConfirmationUrl = createPageUrl("DailyConfirmation");
+      if (location.pathname !== dailyConfirmationUrl) {
+        navigate(dailyConfirmationUrl, { replace: true });
+      }
     }
-  }, [user, location.pathname, navigate, hasToken]);
+  }, [user, soldiers, location.pathname, navigate, hasToken]);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) { setIsAdmin(false); return; }
-      if (user.role === 'admin') { setIsAdmin(true); return; }
-      try {
-        const soldiers = await Soldier.list();
-        const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
-        setIsAdmin(soldierRecord && soldierRecord.role === 'admin');
-      } catch (error) {
-        setIsAdmin(false);
-      }
-    };
-    checkAdminStatus();
-  }, [user]);
+    if (!user) { setIsAdmin(false); return; }
+    if (user.role === 'admin') { setIsAdmin(true); return; }
+    if (soldiers) {
+      const soldierRecord = soldiers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
+      setIsAdmin(soldierRecord && soldierRecord.role === 'admin');
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user, soldiers]);
 
   if (hasToken) {
     return (
