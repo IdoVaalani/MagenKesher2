@@ -100,8 +100,15 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
+      // If user auth fails, treat as auth required so we redirect to login
+      const status = error?.status || error?.response?.status;
+      if (status === 401 || status === 403) {
+        setAuthError({
+          type: 'auth_required',
+          message: 'Authentication required'
+        });
+      } else {
+        // Any other error during auth check should also redirect to login
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
