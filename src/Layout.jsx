@@ -40,12 +40,15 @@ export default function Layout({ children, currentPageName }) {
     }
     const loadInitialData = async () => {
       try {
-        const [userData, soldiersList] = await Promise.all([
-          User.me(),
-          Soldier.list()
-        ]);
+        const userData = await User.me();
         setUser(userData);
-        setSoldiers(soldiersList);
+        try {
+          const soldiersList = await Soldier.list();
+          setSoldiers(soldiersList);
+        } catch (e) {
+          console.warn('Could not load soldiers list:', e.message);
+          setSoldiers([]);
+        }
       } catch (error) {
         User.login();
       } finally {
