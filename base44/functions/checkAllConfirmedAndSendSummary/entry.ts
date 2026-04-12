@@ -162,16 +162,19 @@ Deno.serve(async (req) => {
     }
 
     let reportUrl = null;
-    try {
-      const csvContent = '\ufeff' + csvRows.join('\n');
-      const csvBytes = new TextEncoder().encode(csvContent);
-      const today2 = israelDate.toISOString().split('T')[0];
-      const csvFile = new File([csvBytes], `סיכום_ציוד_${today2}.csv`, { type: 'text/csv;charset=utf-8;' });
-      const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file: csvFile });
-      reportUrl = file_url;
-      console.log('CSV uploaded:', reportUrl);
-    } catch (csvErr) {
-      console.error('Failed to generate CSV:', csvErr.message);
+    if (csvRows.length > 1) {
+      try {
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const csvBytes = new TextEncoder().encode(csvContent);
+        const csvFile = new File([csvBytes], `סיכום_ציוד_${today}.csv`, { type: 'text/csv;charset=utf-8;' });
+        const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file: csvFile });
+        reportUrl = file_url;
+        console.log('CSV uploaded:', reportUrl);
+      } catch (csvErr) {
+        console.error('Failed to generate CSV:', csvErr.message);
+      }
+    } else {
+      console.log('No equipment with serial numbers found for CSV report');
     }
 
     // Build summary email
@@ -249,6 +252,12 @@ Deno.serve(async (req) => {
         console.error(`Failed to send to ${recipient.value}:`, err.message);
       }
     }
+
+    // Save DailySummaryLog
+    await base44.asServiceRole.entities.DailySummaryLog.create({
+      summary_date: today,
+      sent_at: new Date().toISOString()
+    });
 
     console.log(`Summary sent: ${results.success} success, ${results.failed} failed`);
     return Response.json({ sent: true, results, reportUrl });
