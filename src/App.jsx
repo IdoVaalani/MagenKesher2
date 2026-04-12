@@ -1,4 +1,5 @@
 import './App.css'
+import React, { useEffect, useState } from 'react'
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -20,15 +21,27 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const [redirectFailed, setRedirectFailed] = useState(false);
 
   // Check if current URL has a token parameter (for token-based access like DailyConfirmation)
   const urlParams = new URLSearchParams(window.location.search);
   const hasToken = !!urlParams.get('token');
   const isDailyConfirmationWithToken = window.location.pathname.includes('DailyConfirmation') && hasToken;
 
+  const needsLogin = authError?.type === 'auth_required' && !isDailyConfirmationWithToken;
+
+  // Handle redirect to login via useEffect (not during render)
+  useEffect(() => {
+    if (needsLogin) {
+      navigateToLogin();
+      // If redirect doesn't happen within 3 seconds, show manual button
+      const timer = setTimeout(() => setRedirectFailed(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [needsLogin]);
+
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
-    // Skip loading wait for token-based access
     if (!isDailyConfirmationWithToken) {
       return (
         <div className="fixed inset-0 flex items-center justify-center">
@@ -43,9 +56,27 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-slate-50" dir="rtl">
+          <div className="text-center p-6">
+            {!redirectFailed ? (
+              <>
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-slate-600">מעביר לדף התחברות...</p>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-700 text-lg mb-4">נדרשת התחברות</p>
+                <button
+                  onClick={() => navigateToLogin()}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  התחבר</button>
+              </>
+            )}
+          </div>
+        </div>
+      );
     }
   }
 
