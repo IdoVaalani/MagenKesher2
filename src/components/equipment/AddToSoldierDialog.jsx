@@ -27,6 +27,7 @@ export default function AddToSoldierDialog({
   onAssignSuccess 
 }) {
   const [selectedTypeIds, setSelectedTypeIds] = useState(new Set());
+  const [ancillaryQuantities, setAncillaryQuantities] = useState({});
   const [searchFilter, setSearchFilter] = useState("");
   const [location, setLocation] = useState("אצל החייל");
   const [locationDetails, setLocationDetails] = useState("");
@@ -38,6 +39,7 @@ export default function AddToSoldierDialog({
   useEffect(() => {
     if (!open) {
       setSelectedTypeIds(new Set());
+      setAncillaryQuantities({});
       setSearchFilter("");
       setLocation("אצל החייל");
       setLocationDetails("");
@@ -90,6 +92,18 @@ export default function AddToSoldierDialog({
     return equipmentTypes.filter(et => selectedTypeIds.has(et.id));
   }, [equipmentTypes, selectedTypeIds]);
 
+  const totalItemsToCreate = useMemo(() => {
+    let count = 0;
+    for (const et of selectedEquipmentTypesList) {
+      if (isAncillary(et)) {
+        count += (ancillaryQuantities[et.id] || 1);
+      } else {
+        count += 1;
+      }
+    }
+    return count;
+  }, [selectedEquipmentTypesList, ancillaryQuantities]);
+
   const filteredAvailable = useMemo(() => {
     if (!searchFilter.trim()) return availableEquipmentTypes;
     const q = searchFilter.toLowerCase();
@@ -99,11 +113,23 @@ export default function AddToSoldierDialog({
     );
   }, [availableEquipmentTypes, searchFilter]);
 
+  const isAncillary = (et) => !et.serial_number || et.serial_number === 0;
+
   const toggleSelection = (id) => {
+    const et = equipmentTypes.find(t => t.id === id);
     setSelectedTypeIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        if (et && isAncillary(et)) {
+          setAncillaryQuantities(prev => { const n = {...prev}; delete n[id]; return n; });
+        }
+      } else {
+        next.add(id);
+        if (et && isAncillary(et) && !ancillaryQuantities[id]) {
+          setAncillaryQuantities(prev => ({ ...prev, [id]: 1 }));
+        }
+      }
       return next;
     });
   };
@@ -194,17 +220,21 @@ export default function AddToSoldierDialog({
     try {
       const createdAssignments = [];
       for (const typeId of selectedTypeIds) {
-        const eq = await Equipment.create({
-          soldier_name: soldierName,
-          soldier_id: soldierId || "",
-          soldier_email: soldierEmail || "",
-          equipment_type_id: typeId,
-          location: location,
-          location_details: locationDetails.trim(),
-          status: "active",
-          requires_soldier_confirmation: true
-        });
-        createdAssignments.push({ id: eq.id, typeId });
+        const et = equipmentTypes.find(t => t.id === typeId);
+        const qty = (et && isAncillary(et)) ? (ancillaryQuantities[typeId] || 1) : 1;
+        for (let i = 0; i < qty; i++) {
+          const eq = await Equipment.create({
+            soldier_name: soldierName,
+            soldier_id: soldierId || "",
+            soldier_email: soldierEmail || "",
+            equipment_type_id: typeId,
+            location: location,
+            location_details: locationDetails.trim(),
+            status: "active",
+            requires_soldier_confirmation: true
+          });
+          createdAssignments.push({ id: eq.id, typeId });
+        }
       }
 
       if (signatureMethod === "email") {
@@ -321,25 +351,62 @@ export default function AddToSoldierDialog({
                     {availableEquipmentTypes.length === 0 ? "אין ציוד זמין להוספה" : "לא נמצאו תוצאות"}
                   </p>
                 ) : (
-                  filteredAvailable.map(et => (
-                    <label
-                      key={et.id}
-                      className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors ${
-                        selectedTypeIds.has(et.id) ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <Checkbox
-                        checked={selectedTypeIds.has(et.id)}
-                        onCheckedChange={() => toggleSelection(et.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{et.name}</p>
-                        <p className="text-xs text-slate-500">
-                          {et.serial_number ? `צ': ${et.serial_number} - ייחודי` : 'נלווה'}
-                        </p>
+                  filteredAvailable.map(et => {
+                    const ancillary = isAncillary(et);
+                    const selected = selectedTypeIds.has(et.id);
+                    return (
+                      <div
+                        key={et.id}
+                        className={`flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors ${
+                          selected ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                          <Checkbox
+                            checked={selected}
+                            onCheckedChange={() => toggleSelection(et.id)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">{et.name}</p>
+                            <p className="text-xs text-slate-500">
+                              {et.serial_number ? `צ': ${et.serial_number} - ייחודי` : 'נלווה'}
+                            </p>
+                          </div>
+                        </label>
+                        {ancillary && selected && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAncillaryQuantities(prev => ({
+                                  ...prev,
+                                  [et.id]: Math.max(1, (prev[et.id] || 1) - 1)
+                                }));
+                              }}
+                            >-</Button>
+                            <span className="w-6 text-center text-sm font-medium">{ancillaryQuantities[et.id] || 1}</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAncillaryQuantities(prev => ({
+                                  ...prev,
+                                  [et.id]: (prev[et.id] || 1) + 1
+                                }));
+                              }}
+                            >+</Button>
+                          </div>
+                        )}
                       </div>
-                    </label>
-                  ))
+                    );
+                  }))
                 )}
               </div>
             </div>
@@ -384,7 +451,7 @@ export default function AddToSoldierDialog({
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="w-4 h-4 ml-2" /> 
-                {isSaving ? "מוסיף..." : `הוסף ${selectedTypeIds.size || ''} ציוד`}
+                {isSaving ? "מוסיף..." : `הוסף ${totalItemsToCreate || ''} ציוד`}
               </Button>
             </DialogFooter>
           </form>
