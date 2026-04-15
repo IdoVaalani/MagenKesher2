@@ -26,6 +26,7 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
   const [signatureMethod, setSignatureMethod] = useState("email");
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [createdEquipmentInfo, setCreatedEquipmentInfo] = useState(null);
+  const [ancillaryQuantities, setAncillaryQuantities] = useState({});
 
   useEffect(() => {
     if (!open) {
@@ -38,6 +39,7 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
       setSignatureMethod("email");
       setShowSignatureDialog(false);
       setCreatedEquipmentInfo(null);
+      setAncillaryQuantities({});
     }
   }, [open]);
 
@@ -85,9 +87,23 @@ export default function AssignEquipmentDialog({ open, onOpenChange, soldiers, eq
     );
   }, [availableEquipmentTypes, searchTerm]);
 
+  const isAncillary = (et) => !et.serial_number || et.serial_number === 0;
+
   const selectedEquipmentTypes = useMemo(() => {
     return safeEquipmentTypes.filter(et => selectedEquipmentTypeIds.includes(et.id));
   }, [safeEquipmentTypes, selectedEquipmentTypeIds]);
+
+  const totalItemsToCreate = useMemo(() => {
+    let count = 0;
+    for (const et of selectedEquipmentTypes) {
+      if (isAncillary(et)) {
+        count += (ancillaryQuantities[et.id] || 1);
+      } else {
+        count += 1;
+      }
+    }
+    return count;
+  }, [selectedEquipmentTypes, ancillaryQuantities]);
 
   const generateSoldierToken = async (soldierEmail, soldierName, equipmentTypeIds, soldierId) => {
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -175,18 +191,23 @@ ${signatureUrl}
 
     setIsSaving(true);
     try {
-      const creationPromises = selectedEquipmentTypeIds.map(typeId => {
-        return Equipment.create({
-          soldier_name: soldier.full_name,
-          soldier_id: soldier.personal_id || "",
-          soldier_email: soldier.email || "",
-          equipment_type_id: typeId,
-          location: location,
-          location_details: locationDetails.trim(),
-          status: "active",
-          requires_soldier_confirmation: true
-        });
-      });
+      const creationPromises = [];
+      for (const typeId of selectedEquipmentTypeIds) {
+        const et = safeEquipmentTypes.find(t => t.id === typeId);
+        const qty = (et && isAncillary(et)) ? (ancillaryQuantities[typeId] || 1) : 1;
+        for (let i = 0; i < qty; i++) {
+          creationPromises.push(Equipment.create({
+            soldier_name: soldier.full_name,
+            soldier_id: soldier.personal_id || "",
+            soldier_email: soldier.email || "",
+            equipment_type_id: typeId,
+            location: location,
+            location_details: locationDetails.trim(),
+            status: "active",
+            requires_soldier_confirmation: true
+          }));
+        }
+      }
       await Promise.all(creationPromises);
       
       const equipmentToSign = selectedEquipmentTypes;
@@ -290,24 +311,59 @@ ${signatureUrl}
                 />
               </div>
               <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-1">
-                {filteredAvailableEquipmentTypes.length > 0 ? filteredAvailableEquipmentTypes.map(et => (
-                  <div key={et.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50">
-                    <Checkbox
-                      id={`eq-${et.id}`}
-                      checked={selectedEquipmentTypeIds.includes(et.id)}
-                      onCheckedChange={(checked) => {
-                        setSelectedEquipmentTypeIds(prev =>
-                          checked
-                            ? [...prev, et.id]
-                            : prev.filter(id => id !== et.id)
-                        );
-                      }}
-                    />
-                    <Label htmlFor={`eq-${et.id}`} className="cursor-pointer flex-1">
-                      {et.name} {et.serial_number ? <span className="text-blue-600 font-mono text-xs">(צ': {et.serial_number})</span> : <span className="text-gray-500 text-xs">(נלווה)</span>}
-                    </Label>
-                  </div>
-                )) : (
+                {filteredAvailableEquipmentTypes.length > 0 ? filteredAvailableEquipmentTypes.map(et => {
+                  const ancillary = isAncillary(et);
+                  const selected = selectedEquipmentTypeIds.includes(et.id);
+                  return (
+                    <div key={et.id} className={`flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 ${selected ? 'bg-blue-50' : ''}`}>
+                      <Checkbox
+                        id={`eq-${et.id}`}
+                        checked={selected}
+                        onCheckedChange={(checked) => {
+                          setSelectedEquipmentTypeIds(prev =>
+                            checked
+                              ? [...prev, et.id]
+                              : prev.filter(id => id !== et.id)
+                          );
+                          if (!checked && ancillary) {
+                            setAncillaryQuantities(prev => { const n = {...prev}; delete n[et.id]; return n; });
+                          }
+                          if (checked && ancillary && !ancillaryQuantities[et.id]) {
+                            setAncillaryQuantities(prev => ({ ...prev, [et.id]: 1 }));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`eq-${et.id}`} className="cursor-pointer flex-1">
+                        {et.name} {et.serial_number ? <span className="text-blue-600 font-mono text-xs">(צ': {et.serial_number})</span> : <span className="text-gray-500 text-xs">(נלווה)</span>}
+                      </Label>
+                      {ancillary && selected && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 text-xs"
+                            onClick={() => setAncillaryQuantities(prev => ({
+                              ...prev,
+                              [et.id]: Math.max(1, (prev[et.id] || 1) - 1)
+                            }))}
+                          >-</Button>
+                          <span className="w-6 text-center text-sm font-medium">{ancillaryQuantities[et.id] || 1}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 text-xs"
+                            onClick={() => setAncillaryQuantities(prev => ({
+                              ...prev,
+                              [et.id]: (prev[et.id] || 1) + 1
+                            }))}
+                          >+</Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }) : (
                   <p className="text-center text-sm text-slate-500 p-4">
                     {availableEquipmentTypes.length === 0 ? "כל הציוד הייחודי משויך" : "לא נמצאו תוצאות לחיפוש"}
                   </p>
@@ -350,7 +406,7 @@ ${signatureUrl}
                 <X className="w-4 h-4 ml-2" /> ביטול
               </Button>
               <Button type="submit" disabled={isSaving || selectedEquipmentTypeIds.length === 0}>
-                <Save className="w-4 h-4 ml-2" /> {isSaving ? "שומר..." : "שמור שיוך"}
+                <Save className="w-4 h-4 ml-2" /> {isSaving ? "שומר..." : `שמור שיוך (${totalItemsToCreate})`}
               </Button>
             </DialogFooter>
           </form>
