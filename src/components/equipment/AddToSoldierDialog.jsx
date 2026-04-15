@@ -88,6 +88,8 @@ export default function AddToSoldierDialog({
     });
   }, [equipmentTypes, assignments, allSystemAssignments]);
   
+  const isAncillary = (et) => !et.serial_number || et.serial_number === 0;
+
   const selectedEquipmentTypesList = useMemo(() => {
     return equipmentTypes.filter(et => selectedTypeIds.has(et.id));
   }, [equipmentTypes, selectedTypeIds]);
@@ -112,8 +114,6 @@ export default function AddToSoldierDialog({
       et.serial_number?.toString().includes(q)
     );
   }, [availableEquipmentTypes, searchFilter]);
-
-  const isAncillary = (et) => !et.serial_number || et.serial_number === 0;
 
   const toggleSelection = (id) => {
     const et = equipmentTypes.find(t => t.id === id);
