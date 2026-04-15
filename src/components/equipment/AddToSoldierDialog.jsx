@@ -406,7 +406,7 @@ export default function AddToSoldierDialog({
                         )}
                       </div>
                     );
-                  }))
+                  })
                 )}
               </div>
             </div>
