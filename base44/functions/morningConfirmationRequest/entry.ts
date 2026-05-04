@@ -64,12 +64,13 @@ Deno.serve(async (req) => {
     const today = israelDate.toISOString().split('T')[0];
     const formattedDate = israelDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // Load settings, soldiers, equipment, existing confirmations
-    const [settingsList, allSoldiers, allActiveEquipment, todayConfirmations] = await Promise.all([
+    // Load settings, soldiers, equipment, existing confirmations, and today's signatures
+    const [settingsList, allSoldiers, allActiveEquipment, todayConfirmations, todaySignatures] = await Promise.all([
       base44.asServiceRole.entities.AppSettings.list(null, 1),
       base44.asServiceRole.entities.Soldier.list(),
       base44.asServiceRole.entities.Equipment.filter({ status: 'active' }),
       base44.asServiceRole.entities.DailyConfirmation.filter({ confirmation_date: today }),
+      base44.asServiceRole.entities.EquipmentSignature.filter({ signature_date: today }),
     ]);
 
     const settings = settingsList?.[0] || {};
@@ -84,10 +85,14 @@ Deno.serve(async (req) => {
     // Find unique soldiers with active equipment
     const soldiersWithEquipment = [...new Set(allActiveEquipment.map(eq => eq.soldier_name).filter(Boolean))];
     
-    // Find who already confirmed today (complete confirmation)
+    // Find who already confirmed today (complete confirmation) or signed equipment today
     const confirmedSoldiers = new Set(
       todayConfirmations.filter(c => c.is_complete_confirmation === true).map(c => c.soldier_name)
     );
+    // Soldiers who signed equipment today don't need confirmation for today
+    for (const sig of todaySignatures) {
+      if (sig.soldier_name) confirmedSoldiers.add(sig.soldier_name);
+    }
 
     // Build soldier data map
     const soldierDataMap = new Map(allSoldiers.map(s => [s.full_name, s]));

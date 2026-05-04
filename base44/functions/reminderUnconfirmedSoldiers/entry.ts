@@ -57,12 +57,13 @@ Deno.serve(async (req) => {
     const today = israelDate.toISOString().split('T')[0];
     const formattedDate = israelDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // Load data
-    const [settingsList, allSoldiers, allActiveEquipment, todayConfirmations] = await Promise.all([
+    // Load data including today's equipment signatures
+    const [settingsList, allSoldiers, allActiveEquipment, todayConfirmations, todaySignatures] = await Promise.all([
       base44.asServiceRole.entities.AppSettings.list(null, 1),
       base44.asServiceRole.entities.Soldier.list(),
       base44.asServiceRole.entities.Equipment.filter({ status: 'active' }),
       base44.asServiceRole.entities.DailyConfirmation.filter({ confirmation_date: today }),
+      base44.asServiceRole.entities.EquipmentSignature.filter({ signature_date: today }),
     ]);
 
     const settings = settingsList?.[0] || {};
@@ -84,7 +85,7 @@ Deno.serve(async (req) => {
     }
     const soldiersWithEquipment = Object.keys(equipmentCountBySoldier);
     
-    // Find who already fully confirmed today
+    // Find who already fully confirmed today or signed equipment today
     const todayConfirmationsMap = new Map(todayConfirmations.map(conf => [conf.soldier_name, conf]));
     const confirmedSoldiers = new Set();
     for (const name of soldiersWithEquipment) {
@@ -94,6 +95,10 @@ Deno.serve(async (req) => {
       if (totalItems > 0 && confirmedItemsCount === totalItems) {
         confirmedSoldiers.add(name);
       }
+    }
+    // Soldiers who signed equipment today are considered confirmed for today
+    for (const sig of todaySignatures) {
+      if (sig.soldier_name) confirmedSoldiers.add(sig.soldier_name);
     }
 
     const unconfirmedSoldiers = soldiersWithEquipment.filter(name => !confirmedSoldiers.has(name));
