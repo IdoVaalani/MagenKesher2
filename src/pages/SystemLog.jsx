@@ -39,11 +39,11 @@ export default function SystemLogPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">לוג מערכת</h1>
-          <p className="text-slate-600">סקירת פעולות והתראות שהתרחשו במערכת.</p>
+        <header className="mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1">לוג מערכת</h1>
+          <p className="text-slate-600 text-xs sm:text-sm">סקירת פעולות והתראות שהתרחשו במערכת.</p>
         </header>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">

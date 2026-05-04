@@ -518,14 +518,14 @@ ${equipmentReportUrl}` : ''}
     }
 
     return (
-        <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
+        <div className="p-3 sm:p-6 space-y-4 sm:space-y-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
             <div className="max-w-4xl mx-auto">
-                <header className="flex justify-between items-center mb-4">
+                <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">הגדרות מערכת</h1>
-                        <p className="text-gray-600 mt-1">ניהול הגדרות כלליות של המערכת.</p>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">הגדרות מערכת</h1>
+                        <p className="text-gray-600 text-xs sm:text-sm mt-0.5">ניהול הגדרות כלליות של המערכת.</p>
                     </div>
-                    <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+                    <Button size="sm" onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                         {isSaving ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
                         שמור שינויים
                     </Button>

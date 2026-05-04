@@ -558,12 +558,12 @@ export default function EquipmentManagement() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col gap-3 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">ניהול שיוכי ציוד</h1>
-            <p className="text-slate-600">שיוך וניהול ציוד לחיילים</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1">ניהול שיוכי ציוד</h1>
+            <p className="text-slate-600 text-xs sm:text-sm">שיוך וניהול ציוד לחיילים</p>
           </div>
           <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 w-full md:w-auto">
             <Button 

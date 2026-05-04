@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +57,7 @@ export default function SoldiersList({ confirmationData, loading, onSoldierClick
           רשימת חיילים ({confirmationData.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-3 sm:p-6">
         {confirmationData.length === 0 ? (
           <div className="text-center py-8">
             <ListChecks className="w-12 h-12 text-slate-400 mx-auto mb-4" />
@@ -66,7 +65,7 @@ export default function SoldiersList({ confirmationData, loading, onSoldierClick
             <p className="text-slate-500">לא נמצאו חיילים עם ציוד הדורש אישור</p>
           </div>
         ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-2 sm:space-y-3 max-h-[60vh] sm:max-h-96 overflow-y-auto">
             {confirmationData.map((soldierData) => {
               const isConfirmed = soldierData.confirmed || false;
               const isPartiallyConfirmed = soldierData.partiallyConfirmed || false; 
@@ -74,7 +73,7 @@ export default function SoldiersList({ confirmationData, loading, onSoldierClick
               return (
                 <div 
                   key={soldierData.soldierName} 
-                  className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg transition-colors ${
+                  className={`flex items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-lg transition-colors ${
                     isPartiallyConfirmed ? 'cursor-pointer hover:bg-yellow-100 border border-yellow-300' : 'hover:bg-slate-100'
                   }`}
                   onClick={() => {
@@ -83,45 +82,45 @@ export default function SoldiersList({ confirmationData, loading, onSoldierClick
                     }
                   }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${
                       isConfirmed ? 'bg-green-100' : isPartiallyConfirmed ? 'bg-yellow-100' : 'bg-orange-100'
                     }`}>
                       {isConfirmed ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                       ) : isPartiallyConfirmed ? (
-                        <Clock className="w-5 h-5 text-yellow-600" />
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
                       ) : (
-                        <Clock className="w-5 h-5 text-orange-600" />
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium text-slate-800">{soldierData.soldierName}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-slate-800 text-sm sm:text-base truncate">{soldierData.soldierName}</p>
                       {soldierData.confirmationTime && (
-                        <p className="text-sm text-slate-500">
-                          אושר בשעה: {soldierData.confirmationTime}
+                        <p className="text-xs sm:text-sm text-slate-500">
+                          אושר: {soldierData.confirmationTime}
                         </p>
                       )}
                       {soldierData.reportDetails && (
-                        <p className="text-xs text-amber-600 mt-1">
+                        <p className="text-[10px] sm:text-xs text-amber-600 mt-0.5 truncate">
                           דווח: {soldierData.reportDetails}
                         </p>
                       )}
                       {isPartiallyConfirmed && (
-                        <p className="text-xs text-yellow-700 mt-1 font-medium">
-                          👆 לחץ לראות מה לא אושר
+                        <p className="text-[10px] sm:text-xs text-yellow-700 mt-0.5 font-medium">
+                          👆 לחץ לפרטים
                         </p>
                       )}
                     </div>
                   </div>
-                  <Badge className={
+                  <Badge className={`shrink-0 text-[10px] sm:text-xs ${
                     isConfirmed 
                       ? "bg-green-100 text-green-800 border-green-200" 
                       : isPartiallyConfirmed 
                       ? "bg-yellow-100 text-yellow-800 border-yellow-200" 
                       : "bg-orange-100 text-orange-800 border-orange-200"
-                  }>
-                    {isConfirmed ? 'אושר במלואו' : isPartiallyConfirmed ? 'אישור חלקי' : 'ממתין'}
+                  }`}>
+                    {isConfirmed ? 'אושר' : isPartiallyConfirmed ? 'חלקי' : 'ממתין'}
                   </Badge>
                 </div>
               );

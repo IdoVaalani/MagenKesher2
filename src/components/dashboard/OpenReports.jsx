@@ -27,7 +27,7 @@ export default function OpenReports({ reports, onMarkAsHandled, isSending }) {
           פניות פתוחות של חיילים ({reports.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-3 sm:p-6">
         {reports.length === 0 ? (
           <div className="text-center py-8">
             <CheckCheck className="w-12 h-12 text-green-500 mx-auto mb-4" />
@@ -35,18 +35,18 @@ export default function OpenReports({ reports, onMarkAsHandled, isSending }) {
             <p className="text-slate-500">כל הדיווחים מטופלים. עבודה טובה!</p>
           </div>
         ) : (
-          <ScrollArea className="h-72">
-            <div className="space-y-4">
+          <ScrollArea className="max-h-72 sm:h-72">
+            <div className="space-y-3 sm:space-y-4">
               {reports.map((report) => (
-                <div key={report.id} className="p-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2 font-semibold text-slate-800">
-                        <User className="w-4 h-4 text-slate-500" />
-                        {report.soldier_name}
+                <div key={report.id} className="p-3 sm:p-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg space-y-2 sm:space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 font-semibold text-slate-800 text-sm sm:text-base">
+                        <User className="w-4 h-4 text-slate-500 shrink-0" />
+                        <span className="truncate">{report.soldier_name}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                        <Calendar className="w-3 h-3" />
+                      <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-500 mt-0.5">
+                        <Calendar className="w-3 h-3 shrink-0" />
                         {safeFormatDate(report.confirmation_date)}
                       </div>
                     </div>
@@ -54,15 +54,15 @@ export default function OpenReports({ reports, onMarkAsHandled, isSending }) {
                         size="sm"
                         onClick={() => onMarkAsHandled(report)}
                         disabled={isSending}
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 h-auto"
+                        className="bg-green-600 hover:bg-green-700 text-white text-[10px] sm:text-xs px-2 sm:px-3 py-1 h-auto shrink-0"
                       >
-                        <CheckCheck className="w-4 h-4 ml-1" />
-                        סמן כטופל
+                        <CheckCheck className="w-3.5 h-3.5 ml-0.5 sm:ml-1" />
+                        טופל
                       </Button>
                   </div>
-                  <div className="flex items-start gap-3 pt-2 border-t border-amber-200">
-                     <MessageSquare className="w-5 h-5 text-amber-600 mt-1 flex-shrink-0" />
-                     <p className="text-sm text-slate-700">{report.report_details}</p>
+                  <div className="flex items-start gap-2 sm:gap-3 pt-2 border-t border-amber-200">
+                     <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                     <p className="text-xs sm:text-sm text-slate-700">{report.report_details}</p>
                   </div>
                 </div>
               ))}

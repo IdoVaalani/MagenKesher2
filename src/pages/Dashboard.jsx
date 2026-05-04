@@ -863,46 +863,60 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-1">לוח בקרה</h1>
-            <p className="text-slate-600 text-sm md:text-base">
-              סקירה כללית • עדכון אחרון: {stats.lastUpdate}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+        <div className="flex flex-col gap-3 mb-4 sm:mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-0.5">לוח בקרה</h1>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base">
+                עדכון: {stats.lastUpdate}
+              </p>
+            </div>
             <Button 
               variant="outline" 
+              size="sm"
               onClick={handleRefresh} 
               disabled={isRefreshing || isSending}
-              className="bg-white hover:bg-slate-50 flex-1 md:flex-none"
+              className="bg-white hover:bg-slate-50 md:hidden"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full md:w-auto">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRefresh} 
+              disabled={isRefreshing || isSending}
+              className="bg-white hover:bg-slate-50 hidden md:flex"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'מרענן...' : 'רענן'}
             </Button>
             <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setShowManualConfirmationDialog(true)}
                 disabled={isSending}
-                className="bg-white hover:bg-slate-50 flex-1 md:flex-none"
+                className="bg-white hover:bg-slate-50 text-xs sm:text-sm"
             >
-                <UserCheck className="w-4 h-4 mr-2" />
+                <UserCheck className="w-4 h-4 ml-1 sm:mr-2" />
                 אישור ידני
             </Button>
             <Button
+              size="sm"
               onClick={sendConfirmationRequestToAll}
               disabled={isSending || stats.totalSoldiers === 0}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 w-full md:w-auto"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 col-span-2 sm:col-span-1 text-xs sm:text-sm"
             >
-              <Mail className="w-4 h-4 mr-2" />
-              {isSending ? 'שולח...' : (stats.confirmed === 0 ? 'שלח בקשת אישור לכולם' : 'שלח תזכורת לממתינים')}
+              <Mail className="w-4 h-4 ml-1 sm:mr-2" />
+              {isSending ? 'שולח...' : (stats.confirmed === 0 ? 'שלח אישור לכולם' : 'תזכורת לממתינים')}
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 md:gap-6 mb-4 sm:mb-8">
           <StatsCards
             title="סה״כ חיילים"
             value={stats.totalSoldiers}

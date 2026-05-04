@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { EquipmentType } from "@/entities/EquipmentType";
 import { Equipment } from "@/entities/Equipment";
@@ -120,28 +119,30 @@ export default function EquipmentTypes() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">סוגי ציוד</h1>
-            <p className="text-slate-600">ניהול רשימת סוגי הציוד במערכת</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1">סוגי ציוד</h1>
+            <p className="text-slate-600 text-xs sm:text-sm">ניהול רשימת סוגי הציוד במערכת</p>
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
+              size="sm"
               onClick={exportToExcel}
               disabled={equipmentTypes.length === 0}
-              className="flex-1 md:flex-none border-slate-300 hover:bg-slate-50"
+              className="flex-1 sm:flex-none border-slate-300 hover:bg-slate-50 text-xs sm:text-sm"
             >
-              <Download className="w-4 h-4 mr-2" />
-              יצוא לאקסל
+              <Download className="w-4 h-4 ml-1 sm:mr-2" />
+              יצוא
             </Button>
             <Button 
+              size="sm"
               onClick={() => setShowAddDialog(true)}
-              className="flex-1 md:flex-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+              className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg text-xs sm:text-sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 ml-1 sm:mr-2" />
               הוסף סוג ציוד
             </Button>
           </div>

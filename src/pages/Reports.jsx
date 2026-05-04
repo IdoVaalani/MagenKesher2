@@ -498,13 +498,11 @@ export default function Reports() {
   const stats = getTotalStats();
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen" dir="rtl">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">דוחות מערכת</h1>
-            <p className="text-slate-600">דוחות אישורים, חתימות דיגיטליות וציוד</p>
-          </div>
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1">דוחות מערכת</h1>
+          <p className="text-slate-600 text-xs sm:text-sm">דוחות אישורים, חתימות דיגיטליות וציוד</p>
         </div>
 
         <Tabs defaultValue="confirmations" className="w-full">
@@ -600,38 +598,38 @@ export default function Reports() {
 
             {/* Summary Stats */}
             {reportData && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
                 <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-8 h-8 text-blue-600" />
+                  <CardContent className="p-2.5 sm:p-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-right">
+                      <Calendar className="w-5 h-5 sm:w-8 sm:h-8 text-blue-600" />
                       <div>
-                        <p className="text-sm text-blue-600">ימים בטווח</p>
-                        <p className="text-2xl font-bold text-blue-800">{stats.totalDays}</p>
+                        <p className="text-[10px] sm:text-sm text-blue-600">ימים בטווח</p>
+                        <p className="text-lg sm:text-2xl font-bold text-blue-800">{stats.totalDays}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-green-50 border-green-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-8 h-8 text-green-600" />
+                  <CardContent className="p-2.5 sm:p-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-right">
+                      <CheckCircle className="w-5 h-5 sm:w-8 sm:h-8 text-green-600" />
                       <div>
-                        <p className="text-sm text-green-600">ימים עם פעילות</p>
-                        <p className="text-2xl font-bold text-green-800">{stats.activeDays}</p>
+                        <p className="text-[10px] sm:text-sm text-green-600">פעילות</p>
+                        <p className="text-lg sm:text-2xl font-bold text-green-800">{stats.activeDays}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-purple-50 border-purple-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <BarChart3 className="w-8 h-8 text-purple-600" />
+                  <CardContent className="p-2.5 sm:p-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-right">
+                      <BarChart3 className="w-5 h-5 sm:w-8 sm:h-8 text-purple-600" />
                       <div>
-                        <p className="text-sm text-purple-600">סה"כ אישורים</p>
-                        <p className="text-2xl font-bold text-purple-800">{stats.totalConfirmations}</p>
+                        <p className="text-[10px] sm:text-sm text-purple-600">אישורים</p>
+                        <p className="text-lg sm:text-2xl font-bold text-purple-800">{stats.totalConfirmations}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -775,14 +773,14 @@ export default function Reports() {
             </Card>
 
             {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
               <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <PenTool className="w-8 h-8 text-blue-600" />
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-right">
+                    <PenTool className="w-5 h-5 sm:w-8 sm:h-8 text-blue-600" />
                     <div>
-                      <p className="text-sm text-blue-600">חתימות פעילות</p>
-                      <p className="text-2xl font-bold text-blue-800">
+                      <p className="text-[10px] sm:text-sm text-blue-600">פעילות</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-800">
                         {Array.isArray(signatures) ? signatures.filter(s => s && s.status === 'active').length : 0}
                       </p>
                     </div>
@@ -791,12 +789,12 @@ export default function Reports() {
               </Card>
 
               <Card className="bg-green-50 border-green-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <User className="w-8 h-8 text-green-600" />
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-right">
+                    <User className="w-5 h-5 sm:w-8 sm:h-8 text-green-600" />
                     <div>
-                      <p className="text-sm text-green-600">חיילים שחתמו</p>
-                      <p className="text-2xl font-bold text-green-800">
+                      <p className="text-[10px] sm:text-sm text-green-600">חתמו</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-800">
                         {Array.isArray(signatures) ? 
                           new Set(signatures.filter(s => s && s.status === 'active').map(s => s.soldier_name)).size : 0}
                       </p>
@@ -805,13 +803,13 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-red-50 border-red-200"> {/* Changed styling for revoked signatures */}
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <XCircle className="w-8 h-8 text-red-600" /> {/* Changed icon to XCircle */}
+              <Card className="bg-red-50 border-red-200">
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-right">
+                    <XCircle className="w-5 h-5 sm:w-8 sm:h-8 text-red-600" />
                     <div>
-                      <p className="text-sm text-red-600">חתימות מבוטלות</p> {/* Changed text */}
-                      <p className="text-2xl font-bold text-red-800">
+                      <p className="text-[10px] sm:text-sm text-red-600">מבוטלות</p>
+                      <p className="text-lg sm:text-2xl font-bold text-red-800">
                         {Array.isArray(signatures) ? signatures.filter(s => s && s.status === 'revoked').length : 0}
                       </p>
                     </div>

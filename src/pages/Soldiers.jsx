@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Soldier } from "@/entities/Soldier";
 import { Equipment } from "@/entities/Equipment";
@@ -139,16 +138,17 @@ export default function SoldiersPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">ניהול חיילים</h1>
-            <p className="text-slate-600">הוספה, עריכה ומחיקה של חיילים במערכת</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1">ניהול חיילים</h1>
+            <p className="text-slate-600 text-xs sm:text-sm">הוספה, עריכה ומחיקה של חיילים במערכת</p>
           </div>
           <Button 
+            size="sm"
             onClick={() => { setEditingSoldier(null); setShowDialog(true); }}
-            className="flex-1 md:flex-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
           >
             <Plus className="w-4 h-4 mr-2" />
             הוסף חייל חדש
