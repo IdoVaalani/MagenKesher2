@@ -4,6 +4,7 @@ import { Equipment } from "@/entities/Equipment";
 import { EquipmentType } from "@/entities/EquipmentType";
 import { Soldier } from "@/entities/Soldier";
 import { DailyConfirmation } from "@/entities/DailyConfirmation";
+import { EquipmentSignature } from "@/entities/EquipmentSignature";
 import { SoldierToken } from "@/entities/SoldierToken";
 import { AppSettings } from "@/entities/AppSettings";
 import { SystemLog } from "@/entities/SystemLog";
@@ -314,14 +315,21 @@ export default function Dashboard() {
         todayConfirmations,
         soldiersList,
         allOpenReports,
-        allEquipmentTypes
+        allEquipmentTypes,
+        todaySignatures
       ] = await Promise.all([
         Equipment.filter({ status: 'active' }),
         DailyConfirmation.filter({ confirmation_date: today }),
         Soldier.list(),
         DailyConfirmation.filter({ report_handled: false }),
-        EquipmentType.list()
+        EquipmentType.list(),
+        EquipmentSignature.filter({ signature_date: today, status: 'active' })
       ]);
+
+      // Build a set of soldiers who signed equipment today
+      const soldiersWhoSignedToday = new Set(
+        todaySignatures.map(sig => sig.soldier_name).filter(Boolean)
+      );
       
       setAllSoldiers(soldiersList);
       
@@ -350,7 +358,9 @@ export default function Dashboard() {
         const confRecord = todayConfirmationsMap.get(name);
         const confirmedItems = confRecord?.equipment_ids?.length || 0;
         
-        const isFullyConfirmed = confRecord?.is_complete_confirmation === true || (totalItems > 0 && confirmedItems === totalItems);
+        const isFullyConfirmed = confRecord?.is_complete_confirmation === true || 
+                                 (totalItems > 0 && confirmedItems === totalItems) ||
+                                 soldiersWhoSignedToday.has(name);
         
         if (isFullyConfirmed) {
             liveConfirmedCount++;
@@ -373,6 +383,9 @@ export default function Dashboard() {
       });
 
       for (const eq of serialNumberedEquipment) {
+          // If this soldier signed today, all their equipment counts as confirmed
+          if (soldiersWhoSignedToday.has(eq.soldier_name)) continue;
+          
           const soldierConfirmedEquipmentIds = confirmedEquipmentIdsBySoldier.get(eq.soldier_name);
           if (!soldierConfirmedEquipmentIds || !soldierConfirmedEquipmentIds.has(eq.id)) {
               unconfirmedSerialCount++;
@@ -398,25 +411,31 @@ export default function Dashboard() {
         const confirmationRecord = todayConfirmationsMap.get(name);
         const totalItems = equipmentCountBySoldier[name] || 0;
         const confirmedItemsCount = confirmationRecord?.equipment_ids?.length || 0;
+        const signedToday = soldiersWhoSignedToday.has(name);
 
         const isFullyConfirmed = confirmationRecord?.is_complete_confirmation === true || 
-                                 (totalItems > 0 && confirmedItemsCount === totalItems);
-        const hasPartialConfirmation = confirmationRecord && 
+                                 (totalItems > 0 && confirmedItemsCount === totalItems) ||
+                                 signedToday;
+        const hasPartialConfirmation = !signedToday && confirmationRecord && 
                                        !isFullyConfirmed && 
                                        confirmedItemsCount > 0 && 
                                        confirmationRecord.is_complete_confirmation !== true;
         
         const soldierInfo = soldiersList.find(s => s.full_name === name);
         
+        // Find signature time if signed today
+        const signatureRecord = signedToday ? todaySignatures.find(s => s.soldier_name === name) : null;
+        
         return {
           soldierName: name,
           confirmed: isFullyConfirmed,
           partiallyConfirmed: hasPartialConfirmation,
-          confirmationTime: confirmationRecord?.confirmation_time || null,
+          confirmationTime: confirmationRecord?.confirmation_time || (signedToday ? signatureRecord?.signature_time : null),
           reportDetails: confirmationRecord?.report_details || null,
           soldierEmail: soldierInfo?.email || '',
           soldierPhone: soldierInfo?.phone_number || '',
-          soldierId: soldierInfo?.id || ''
+          soldierId: soldierInfo?.id || '',
+          signedToday: signedToday
         };
       });
 

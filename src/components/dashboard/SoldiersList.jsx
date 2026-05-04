@@ -98,7 +98,7 @@ export default function SoldiersList({ confirmationData, loading, onSoldierClick
                       <p className="font-medium text-slate-800 text-sm sm:text-base truncate">{soldierData.soldierName}</p>
                       {soldierData.confirmationTime && (
                         <p className="text-xs sm:text-sm text-slate-500">
-                          אושר: {soldierData.confirmationTime}
+                          {soldierData.signedToday ? 'נחתם' : 'אושר'}: {soldierData.confirmationTime}
                         </p>
                       )}
                       {soldierData.reportDetails && (
@@ -120,7 +120,7 @@ export default function SoldiersList({ confirmationData, loading, onSoldierClick
                       ? "bg-yellow-100 text-yellow-800 border-yellow-200" 
                       : "bg-orange-100 text-orange-800 border-orange-200"
                   }`}>
-                    {isConfirmed ? 'אושר' : isPartiallyConfirmed ? 'חלקי' : 'ממתין'}
+                    {isConfirmed ? (soldierData.signedToday ? 'נחתם' : 'אושר') : isPartiallyConfirmed ? 'חלקי' : 'ממתין'}
                   </Badge>
                 </div>
               );
